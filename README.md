@@ -1,13 +1,35 @@
 # Javascript
 
 # Index
-* [Master the JS interview](https://gist.github.com/Geoff-Ford/c985b67a1a27deadb970d828b6a90282)
-    * [Closure](#closure)
-    * [Class vs Prototype](#class-vs-prototype)
 
-* Connections
-* [HTTP Methods & Connection](#http-methods---connection)
+Reference docs
+* [Docs Reference: Global_Objects](#docs-reference--global-objects)
+* [Docs Reference: ES6, ES7, ES8, ES9](#docs-reference--es6--es7--es8--es9)
 
+Fundamentals (Syntax)
+* [Fundamentals: Intro](#fundamentals--intro)
+* [Fundamentals - User Input](#fundamentals---user-input)
+* [Fundamentals: Var vs Let](#fundamentals--var-vs-let)
+* [Fundamentals: Hoisting](#fundamentals--hoisting)
+* [Fundamentals: Object Literal Syntax](#fundamentals--object-literal-syntax)
+* [Fundamentals: Primitive wrapper objects](#fundamentals--primitive-wrapper-objects)
+* [Fundamentals: Error Objects](#fundamentals--error-objects)
+* [Fundamentals: Closure](#fundamentals--closure)
+* [Fundamentals: Encapsulation](#fundamentals--encapsulation)
+* [Fundamentals: Arrow Functions](#fundamentals--arrow-functions)
+* [Fundamentals: Bind](#fundamentals--bind)
+* [Fundamentals: Class Inheritance](#fundamentals--class-inheritance)
+* [Fundamentals: Array Methods](#fundamentals--array-methods)
+* [Fundamentals: Promises](#fundamentals--promises)
+* [Fundamentals: HTTP Methods & Connection](#fundamentals--http-methods---connection)
+
+Intermediate (In-depth)
+* [Intermediate: Functions and Patterns](#intermediate--functions-and-patterns)
+* [Intermediate: Promise chaining](#intermediate--promise-chaining)
+* [Intermediate: Async/Await](#intermediate--async-await)
+* [Intermediate: Class vs Prototype](#intermediate--class-vs-prototype)
+* [Intermediate: Prototypal OO](#intermediate--prototypal-oo)
+* [Intermediate: Object Composition](#intermediate--object-composition)
 # Docs Reference: Global_Objects
 Global objects or standard __built in objects__ refers to objects in the global scope.
 
