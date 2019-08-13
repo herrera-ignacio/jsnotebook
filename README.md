@@ -891,8 +891,8 @@ Visit the [Github repo](https://github.com/axios/axios) for more info and __exam
 
 # Intermediate: Functions and Patterns
 
-* _first-class objects_
-* they provide __scope__
+* _first-class objects_ (IMPORTANT)
+* they provide __scope__ (IMPORTANT)
 * can be created __dynamically at runtime__
 * cna be assigned to variables
 * can have references copied to other variables
@@ -936,7 +936,141 @@ As functions are just objects assigned to variables, when using a function decla
 
 ---
 
- ### Callback Pattern
+ ### Patterns
+
+Following sections explain good patterns related to functions that JavaScript has to offer, starting with the callback pattern. Again, it's important to remember the two special features of the functions in JavaScript
+
+* Functions are __objects__
+* Functions provide __local scope__
+# Intermediate: Callback Pattern
+As functions are objects, they can be passed as __arguments to other functions__.
+
+```javascript
+function writeCode(callback) {
+    // do something
+    callback();
+}
+
+function introduceBugs() {
+    // ... make bugs
+}
+
+writeCode(introduceBgs);
+```
+
+Notice how `introduceBugs()` is passed as an argument to `writeCode()` without the parentheses. Parentheses execute a function whereas in this case we want to pass only a reference to the function and let `writeCode()` call it back when appropiate.
+
+ ### Callback example
+
+Let's take an example and start without a callback first and then refactor later. 
+
+```javascript
+let findNodes = function () {
+    let i = 10000, // big heavy loop
+        nodes = [], // store the result
+        found; // the next node found
+    while (i) {
+        i -= 1;
+        // complex logic here...
+        nodes.push(found)
+    }
+    return nodes;
+};
+```
+
+It's a good idea to keep this function generic and have it simply return an array of DOM nodes, without doing anything with the actual elements.
+
+The logic of modifying nodes coud be in a different function, for example a function called `hide()` which, as the name suggest, hides the nodes from the page:
+
+```javascript
+let hide = function (nodes) {
+    let i = 0, max = nodes.length;
+    for(; i < max; i+= 1) {
+        nodes[i].style.display = "none";
+    }
+};
+
+hide(findNodes());
+```
+
+This implementation is inefficient, because `hide()` has to loop again through the array of nodes returned by `findNodes()`. It would be more efficient if you could avoid this loop and hide the nodes as soon as you select them in `findNodes()`. But if you implement the hiding logic in `findNodes()`, it will no longer be a generif function because of the _coupling_ of the retrieval and modification logic.
+
+Enter the callback pattern, you pass your node hiding logic as a callack function and delegate its execution.
+
+```javascript
+let findNodes = function (callback) {
+    let i = 100000,
+        nodes = [],
+        found;
+    
+    // check if callback is callable
+    if (typeof callback !== 'function') {
+        callback = false;
+    }
+    
+    while (i) {
+        i -= 1;
+        
+        // complex logic here..
+        
+        // now callback
+        if (callback) {
+            callback(found);
+        }
+        
+        nodes.push(found);
+    }
+    return nodes;
+};
+
+let hide = function(node) {
+    node.style.display = "none";
+};
+
+findNodes(hide);
+```
+
+You can also use an anonymous function as callback
+
+```javascript
+findNodes(function (node) {
+    node.style.display = "block";
+});
+```
+
+ ### Callbacks and Scope
+
+There are often scenarios where the callback is not one-off anonymous functiion or a global function, but it's a method of an object. If the callback method uses `this` to refer to the object it belongs to, it might cause unexpected behavior.
+
+The solution to this proble mis to pass the callback function and in addition pass the object this callback belongs to.
+
+```javascript
+let findNodes = function (callback, callback_obj) {
+    // ...
+    if (typeof callback === 'function') {
+        callback.call(callback_obj, found);
+    }
+    // ...
+};
+```
+
+You have another workarounds for this with Arrow Functions, binding and using `call()` and `apply()`.
+
+ ### Asynchronous Event Listeners
+
+When you attach an event listener to an element on a page, you're actually providing a pointer to a callback function that will be called when the event occurs. Example:
+
+```javascript
+document.addEventListener('click', console.log, false);
+```
+
+JavaScript is especially suited for event-driven programming, because of the callback pattern, which enables your programs to work __asynchronously__, in other words, out of sequential order.
+
+> Don't call us, we'll call you
+
+ ### Timeouts
+
+Another example of the callback pattern is when you use the timeout methods provided by the brower's window object: `setTimeout()` and `setInterval()`, that also accept and execute callbacks.
 # Intermediate: Promise chaining
 Define promise
 ```
@@ -1089,7 +1223,7 @@ If you were taught to build classes or constructor functions and inherit from th
 
 [Inheritance and the prototype chain](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain)
 # Intermediate: Object Composition
-Inherit just the stuff you really need using object composition.
+Inherit just the stuff you really need using object composition. 
 
  ### Example
 
