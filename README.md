@@ -1107,6 +1107,119 @@ JavaScript is especially suited for event-driven programming, because of the cal
  ### Timeouts
 
 Another example of the callback pattern is when you use the timeout methods provided by the brower's window object: `setTimeout()` and `setInterval()`, that also accept and execute callbacks.
+# Intermediate: Returning Functions Pattern
+Functions are objects, so they can be used as return value. A function can return another more specialized function, or it can create another function on demand, depending on some inputs.
+
+Example:
+
+```javascript
+let setup = function () {
+  let count = 0;
+  return function () {
+    return (count += 1);
+  };
+};
+
+// usage
+let next = setup();
+next(); // 1
+next(); // 2
+next(); // 3
+```
+
+Because `setup()` wraps the returned function, it creates a closure, and you can use this closure to store some private data, which is accesible by the returned function but not to the outside code.
+# Intermediate: Self-Defining Function Pattern
+Another name for this pattern is __lazy function definition__.
+
+Functions can be defined dynamically and can be assigned to variables. A function can overwrite and redefine itself with a new implementation.
+
+This ppatern is __usefull when your function has some initial preparatory work to do and it needs to do it only once__. Using this pattern can obviously help with the performance of your application, because your redefined function simply does less work.
+
+A drawback of these pattern is that any properties you've previously added to the original function will be lost when it redefines itself. Also if the function is used with a different name, for example, assigned to a different variable or used as a method of an object, then the redefinition part will never happen and the origianl function body will be executed, as the overwritten will happen to the global function, but the variables will keep seeing the old definition.
+
+```javascript
+let scareMe = function () {
+  alert('Boo!');
+  scareMe = function () {
+    alert('Double boo!');
+  };
+};
+
+scareMe(); // Boo!
+scareMe(); // Double Boo!
+```
+# Intermediate: Immediate Function Pattern
+Execute a function as soon as it is defined. This term is not defined in the ECMAScript standard, but it's short and helps describe and discuss the pattern.
+
+```javascript
+(function() {
+  alert('watch out!');
+}());
+```
+
+This pattern is useful because it provides a scope _sandbox_ for your initialization code. For example, your code has to perform some setup tasks when the page loads, such as attaching event handlers, creating objects, and so on. All this work needs to be done only once, so there's no reason to create a reusable named function. But the code also requires some temporary variables ,which you won't need after the initialization phase is complete. It would be a bad idea to create all those variables as globals. That's why you need an immediate function, to wrap all your code in its local scope and not leak any variables in the global scope.
+
+ #### Parameters of an Immediate Function
+
+You can also pass arguments to immediate functions, as the following example demonstrates
+
+```javascript
+(function (who, when) {
+  console.log(`I met ${who} on ${when}`)
+}('Joe Black', new Date()))
+```
+
+```javascript
+(function (global) {
+  // access the global object via 'global'
+}(this));
+```
+
+ #### Returned Values from Immediate Functions
+
+You can omit the parentheses that wrap the function.
+
+```javascript
+let result = function () {
+  return 2 + 2;
+}();
+```
+
+You can also return antoher function!
+
+```javascript
+let getResult = (function() {
+  let res = 2 + 2;
+  return function () {
+    return res;
+  };
+}());
+```
+
+Immediate functions can also be used when you define object properties. Imagine you need to define a property that will likely never change during the life of the object, but before you define it a bit of work needs to be performed to figure out the riht value.
+
+```javascript 
+let o = {
+  message: (function () {
+    let who = "me",
+        what = "call";
+    return `${what} ${who}`;    
+  }()),
+  getMsg: function () {
+    return this.message;
+  }
+};
+
+// usage
+o.getMsg(); // "call me"
+o.message; // "call me"
+```
+
+ #### Benefits and Usage
+
+Immediate function pattern is widely used. It helps you wrap an amount of work you want to do without leaving any global variables behind. All the variables you define will be local to the self-invoking funtions and you don't have to worry about polluting the global space with temporary variables.
+
+The pattern also enables you to wrap individual features into self-contained modules.
 # Intermediate: Promise chaining
 Define promise
 ```
