@@ -155,7 +155,7 @@ ES6 can't compile directly in browsers, so we need a compiler such as _babel_ fr
 * __Extended Literals__
     * Binary & Octal Literal
     * Unicode String & RegExp Literal
-* __ Enhancd Regular Expressions__
+* __Enchanced Regular Expressions__
     * Sticky Matching
 * __Enhanced Object Properties__
     * Property Shorthand: `obj = { x, y }`
