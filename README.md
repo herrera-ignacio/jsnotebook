@@ -28,6 +28,9 @@ Intermediate (In-depth)
     * [Callback](#function-pattern--callback)
     * [Returning function](#function-pattern--returning-function)
     * [Self-defining or Lazy Definition](#function-pattern--self-defining-or-lazy-definition)
+    * [Immediate function](#function-pattern--immediate-function)
+    * [Immediate object initialization](#function-pattern--immediate-object-init)
+    * [Load Time Branching](#function-pattern--load-time-branching)
 * [Intermediate: Promise chaining](#intermediate--promise-chaining)
 * [Intermediate: Async/Await](#intermediate--async-await)
 * [Intermediate: Class vs Prototype](#intermediate--class-vs-prototype)
@@ -981,6 +984,20 @@ Following sections explain good patterns related to functions that JavaScript ha
 
 * Functions are __objects__
 * Functions provide __local scope__
+
+1. __API Patterns__: which help you provide better and cleaner interfaces to your functions.
+    * Callback
+    * Returning functions
+    * Currying and configuration
+
+2. __Initialization Patterns__
+    * Immediate functions
+    * Immediate object initialization
+    * Init-time / Load-time branching
+
+3. __Performance Patterns__ 
+    * Memoization
+    * Self-defining functions
 # Function Pattern: Callback
 As functions are objects, they can be passed as __arguments to other functions__.
 
@@ -1151,7 +1168,7 @@ let scareMe = function () {
 scareMe(); // Boo!
 scareMe(); // Double Boo!
 ```
-# Intermediate: Immediate Function Pattern
+# Function Pattern: Immediate Function
 Execute a function as soon as it is defined. This term is not defined in the ECMAScript standard, but it's short and helps describe and discuss the pattern.
 
 ```javascript
@@ -1223,6 +1240,311 @@ o.message; // "call me"
 Immediate function pattern is widely used. It helps you wrap an amount of work you want to do without leaving any global variables behind. All the variables you define will be local to the self-invoking funtions and you don't have to worry about polluting the global space with temporary variables.
 
 The pattern also enables you to wrap individual features into self-contained modules.
+# Function Pattern: Immediate object init
+Another way to protect from global scope pollution. This pattern uses an object with an `init()` method, which is executed immediately after the object is created, that takes care of all initialization tasks.
+
+```javascript
+({
+  // configuration constants
+  max_width: 600,
+  max_height: 400,
+  
+  // utility methods
+  gimmeMax: function () {
+    return `${this.max_width}x${this.max_height}`
+  },
+
+  // initialize
+  init: function () {
+    console.log(this.gimmeMax());
+    // more init tasks...
+  }
+}).init();
+
+// '600x400'
+```
+
+Both of these works:
+```javascript
+({...}).init();
+({...}.init());
+```
+
+ #### Benefits
+
+The same as the _immediate function pattern_, you protect he global namespace while performing the one-off initialization tasks. It may look a little more involved in terms of syntax compared to just wrapping a bunch of code in an anonymous function, but if your initialization tasks are more complicated, it adds structure to the whole initialization procedure. 
+
+ #### Drawback 
+
+Most JavaScript minifiers may not minify this pattern as efficiently as the code simply wrapped into a function. The private properties and methods will not be renamed to shorter names because, from a minifier's point of view, it's not trivial to do so safely. At the moment of writing, Google's Closure Compiler in 'advanced' mode is the only minifier that renames the immediate object's properties to shorter names.
+
+ #### Note
+
+This pattern is mainly suitable for one-off tasks, and there's no access to the object after the init() has completed. If you want to keep a reference to the object after it is done, you can easily achieve this by adding `return this;` at the end of the `init()`.
+# Function Pattern: Load Time Branching
+Also called _Init-Time Branching_, is an optimization pattern.
+
+When you know that a certain condition will not change throughout the life of the proram, it makes sense to test the condition only once. Browser sniffing (or feature detection) is a typical example. For example, after you've sniffe that `XMLHttpRequest` is supported as a native object, there's no chance that the underyling browser will change in the middle of your program execution and all of a sudden you'll need to deal with ActiveX objects.
+
+Figuring out the computed styles of a DOM elemento r attaching event handlers are other candidates that can be benefit from the _init-time branching pattern_.
+
+ #### Benefits
+
+Using _load-time branching_, you sniff the browser features once, during the initial loading of the script. At that time, you redefine how the function will work throughout the lifespan of the page.
+
+```javascript
+// interface
+let utils = {
+  addListener: null,
+  removeListener: null
+};
+
+// implementation
+if (window.addEventListener) {
+  utils.addListener = function (el, type, fn) {
+    el.addEventListener(type, fn, false);
+  };
+  utils.removeListener = function (el, type, fn) {
+    el.removeEventListener(type, fn, false);
+  };
+} else if (document.attachEvent) {
+  // IE
+  utils.addListener = function (el, type, fn) {
+    el.attachEvent(`on${type}`, fn);
+  };
+  utils.removeListener = function (el, type, fn) {
+    el.detachEvent(`on${type}`, fn);
+  };
+} else {
+  // old browsers
+  utils.addListener = function (el, type, fn) {
+    el[`on${type}`] = fn;
+  };
+  utils.removeListener = function (el, type, fn) {
+    el[`on${type}`] = null;
+  };
+}
+```
+
+ #### Disclaimer
+
+Here is the moment to mention a word of caution against browser sniffing. When you use this pattern, don't over-assume browser beatures. For example, if you've sniffed that the browser doesn't support window.addEvent
+, don't just assume he browser you're dealing with is IE and it doesn't support `XMLHttpRequest` natively either
+# Function Pattern: Memoization
+Functions are objects, so they can have properties. In fact, they do have properties and methods out-of-the-box. 
+
+For eample, every function, no matter what syntax you use to create it, automatically gets a `length` property containing the number of arguments the function expects.
+
+```javascript
+function func(a, b, c) {}
+console.log(func.length); // 3
+```
+
+You can add custom properties to your functions at any time. One use case for custom properties is to __cache the results__, so the next time the function is called, it doesn't have to redo potentally heavy computation. This is also known as __memoization__.
+
+In the following example, the function `myFunc` creates a property `cache`, accesible as usual via `myFunc.cache`. This property is an object (a hash) where the parameter `param` passed to the function is used as a key and the result of the computation is the value.
+
+```javascript
+let myFunc = function (param) {
+  if (!myFunc.cache[param]) {
+    let result = {};
+    // ... expensive operation ...
+    myFunc.cache[param] = result;
+  }
+  return myFunc.cache[param];
+};
+```
+
+The preceding code assumes that the function takes only one argument `param` and it's a primitive data type. If you have more parameters and more complex ones, a generic solution would be to serialize them. For example, you acn serialize the arguments object as a JSON string, and use that string as a key in your `cache` object:
+
+```javascript
+let myFunc = function () {
+  let cachekey = JSON.stringify(Array.prototype.slice.call(arguments)),
+      result;
+   
+  if (!myFunc.cache[cachekey]) {
+    result = {};
+    // ... expensive operation ...
+    myFunc.cache[cachekey] = result;
+  }
+  return myFunc.cache[cachekey];
+};
+
+// cache storage
+myFunc.cache = {}
+```
+Be aware that in serialization, the "identify" of the objects is lost, so if you have two differents objects that happen to have the same properties, both will share the same cache entry.
+# Function Pattern: Configuration Objects
+The _configuration object pattern_ is a way to provide cleaner APIs, especially if you're building a library or any other code that will be consumed by other programers.
+
+It often happens that you start working with some requirements in mind, but more functionality gets added afterward. Functions' signature might change, the callers of the function will have to pass different parameters and be careful not to mix the order. In conclusion, passing a large number of parameters is not convenient. A better approach is to substitute all the parameters with only one and make it anobject, let's call it `conf`. 
+
+```
+var conf = {
+    username: 'batman'
+    first: 'Bruce',
+    last: 'Wayne'
+}
+```
+
+ #### Pros 
+
+* No need to remember the parameters and their order
+* You can sefely skip optional parameters
+* Easier to read and maintain
+* Easier to add and remove parameters
+
+ #### Cons
+
+* You need to remember the names of the parameters
+* Property names cannot always be safely minified, especially by simpler minifiers
+
+This pattern could be sefulw hen your function creates DOM elements, for example, or in setting the CSS styles for an element, because elements and styles can have a great number of mostly optional attributes and properties.
+# Function Pattern: Currying
+Currying and _partial_ function application. 
+
+> The process of making a function understand and handle partial application is called currying.
+
+ ### Funciton Application
+In some purely functional programming languages, a function is not described as being _called_ or _onvoked_ but rather it's _applied_. In JavaScript, we can apply a function using the method `Function.prototype.apply()`, because functions in JavaScript are actually objects and they have methods. 
+
+Example of a function application
+```javascript
+// define a function
+let sayHi = function (who) {
+  return `Hello${who ? `, ${who}` : ''}!`;
+};
+
+// invoke a function
+sayHi(); // 'Hello!'
+sayHi('world'); // 'Hello, world!'
+
+// apply a function
+sayHi.apply(null, ['world']); // 'Hello, world!'
+```
+
+As you can see in the example, both _invoking_ and _applying_ have the same result, though `apply()` takes two parameters: __the first one is an object to bind to `this` inside of the function__, the second is an array of arguments. 
+
+If the first parameter is `null`, then `this` points to the global object.
+
+It turns out that what we think of calling a function is not much more than a syntatic sugar, equivalent to a function application. 
+
+Note that in addition to `apply()`, there's a `call()` method of the `Function.prototype` object, but it's still just syntax sugar on top of `apply()`. 
+
+ ### Partial Application
+
+When you perform a partial application you don't get a result (solution), but you get another function instead. 
+
+The next snippet demonstrates the use of an imaginary partialApply() method:
+
+```javascript
+// Imaginary, not valid javascript
+let add = function (x, y) {
+    return x + y;
+};
+
+// full application
+add.apply(null, [5, 4]); // 9
+
+// partial application
+var newadd = add.partialApply(null, [5]);
+// applying an argument to the new function
+newadd.apply(null, [4]); // 9
+```
+
+ ### Currying
+
+Comes from the name of the mathematician Haskell Curry. 
+
+Currying is a __transformation process_, we transform a function. Other functional languages may have that built intothe language itself, and all functions are curried by default. In JavaScript we can modify the `add()` function into a currid one that will handle partial application.
+
+Let's take an example
+```javascript
+// a curried add()
+// accepts partial list of arguments
+function add(x, y) {
+  let oldx = x,
+      oldy = y;
+      if (typeof oldy === 'undefined') {
+        // partial
+        return function (newy) {
+          return oldx + newy;
+        };
+      }
+      // full application
+      return x + y;
+}
+
+// test
+typeof add(5); // 'function'
+add(3)(4); // 7
+
+// create and store a new function
+let add2000 = add(2000);
+add2000(10); // 2010
+```
+
+In this snippet, the first time you call `add()`, it creates a closure around the inner function it returns. The closure stores the original values x and y into private variables `oldx` and `oldy`. The first one, `oldx`, is used when the inner function executes. If there's no partial application and both x and y are passed, the function proceeds to simply add hem.
+
+A less verbose version is shown in the next snippet.
+
+```javascript
+// a curried add()
+// accepts partial list of arguments
+function add(x, y) {
+      if (typeof y === 'undefined') {
+        // partial
+        return function (y) {
+          return x + y;
+        };
+      }
+      // full application
+      return x + y;
+}
+```
+
+ #### General purpose currying function
+
+```javascript
+function schonfinkelize(fn) {
+  let slice = Array.prototype.slice,
+      stored_args = slice.call(arguments, 1);
+  return function () {
+    let new_args = slice.call(arguments),
+        args = stored_args.concat(new_args);
+    return fn.apply(null, args);
+  };
+}
+```
+
+The `schonfinkelize()` function is probably a little more complicated than it should be, only because arguments is not a real array in JavaScript.
+
+Now we can use this general-purpose way of making any function curried:
+
+```javascript
+function add(x, y) {
+  return x + y;
+}
+
+var newadd = schonfinkelize(add, 5);
+newadd(4); // 9
+```
+
+This transformation is not limited to single parameters or to single-step currying. 
+
+```javascript
+function add(a, b, c, d, e) {
+  return a + b + c + d + e;
+}
+
+schonfinkelize(add, 1, 2, 3)(5, 5); // 16
+```
+
+ ### When to use Currying
+
+When you find yourself calling the same function and passing mostly the same parameters, then the function is probably a cood candidate for currying.
+
+You can create a new function dynamically by partially applying a set of arguments to your function. This new function will keep the repeated parameters stored (so you don't have to pass them every time), and will use them to pre-fill the full list of arguments that the original function expects.
 # Intermediate: Promise chaining
 Define promise
 ```
