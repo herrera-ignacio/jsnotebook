@@ -25,6 +25,9 @@ Fundamentals (Syntax)
 
 Intermediate (In-depth)
 * [Intermediate: Functions and Patterns](#intermediate--functions-and-patterns)
+    * [Callback](#function-pattern--callback)
+    * [Returning function](#function-pattern--returning-function)
+    * [Self-defining or Lazy Definition](#function-pattern--self-defining-or-lazy-definition)
 * [Intermediate: Promise chaining](#intermediate--promise-chaining)
 * [Intermediate: Async/Await](#intermediate--async-await)
 * [Intermediate: Class vs Prototype](#intermediate--class-vs-prototype)
@@ -978,7 +981,7 @@ Following sections explain good patterns related to functions that JavaScript ha
 
 * Functions are __objects__
 * Functions provide __local scope__
-# Intermediate: Callback Pattern
+# Function Pattern: Callback
 As functions are objects, they can be passed as __arguments to other functions__.
 
 ```javascript
@@ -1107,7 +1110,7 @@ JavaScript is especially suited for event-driven programming, because of the cal
  ### Timeouts
 
 Another example of the callback pattern is when you use the timeout methods provided by the brower's window object: `setTimeout()` and `setInterval()`, that also accept and execute callbacks.
-# Intermediate: Returning Functions Pattern
+# Function Pattern: Returning Function
 Functions are objects, so they can be used as return value. A function can return another more specialized function, or it can create another function on demand, depending on some inputs.
 
 Example:
@@ -1128,7 +1131,7 @@ next(); // 3
 ```
 
 Because `setup()` wraps the returned function, it creates a closure, and you can use this closure to store some private data, which is accesible by the returned function but not to the outside code.
-# Intermediate: Self-Defining Function Pattern
+# Function Pattern: Self-Defining or Lazy definition
 Another name for this pattern is __lazy function definition__.
 
 Functions can be defined dynamically and can be assigned to variables. A function can overwrite and redefine itself with a new implementation.
