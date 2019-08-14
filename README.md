@@ -1785,3 +1785,318 @@ test('ChannelStrip', assert => {
   assert.end();
 });
 ```
+# Intermediate: Object Creation Patterns
+Creating objects in JavaScript is easy:
+* Object literals
+* Constructor functions
+
+Here, you will take a look at:
+* namespacing
+* dependency declaration
+* module pattern
+* sandbox patterns
+
+These will help you organize and structure your application code, and mitigate the effect of the implied globals.
+
+Other topics of discussion include:
+* private and privileged members
+* static and private static members
+* object constants
+* chaining
+* one class-inspired way to define constructors
+
+The following sections, I will make reference to Object Creation Pattern as __OCP__.
+# OCP: Namespace pattern
+Namespaces help reduce the number of globals required by our programs at the same time also help avoid naming collisions or excessive name prefixing. 
+
+JavaScript doesn't have namespaces built into the language syntax, but this is a feature that is quite easy to achieve.
+
+Instead of polluting the global scope with a lot of functions, objects and other variables, you can create one (and ideally only one) global object for your application or library. Then you can add all the functionality to that object. 
+
+Consider the following example:
+```javascript 
+// BEFORE: 5 globals
+// Warning: antipattern
+
+// constructors
+function Parent() {}
+function Child() {}
+
+// a variable
+let some_var = 1;
+
+// some objects
+let module1 = {};
+module1.data = {a: 1, b: 2};
+let module2 = {};
+```
+
+Applying the pattern:
+```javascript
+// AFTER: 1 global
+
+// global object
+let MYAPP = {};
+
+// constructors
+MYAPP.Parent = function () {};
+MYAPP.Child = function () {};
+
+// a variable
+MYAPP.some_var = 1;
+
+// an object container
+MYAPP.modules = {};
+
+// nested objects
+MYAPP.modules.module1 = {};
+MYAPP.modules.module1.data = {a: 1, b: 2};
+MYAPP.modules.module2 = {};
+```
+
+ #### Advantages
+
+This pattern is highly recommended and a good way to namespace your code and __avoid naming collisions__ in your own code, and collisions __between your code and third-party__ code on the same page, such as libraries or widgets.
+
+ #### Drawbacks
+
+* A bit more to type: prefixing every variable and function
+* Only one global instance means that any part of the code can modify the global instance, and the rest of the functionality gets the updated state
+* Long nested names mean longer (slower) property resolution lookups
+
+The _sandbox pattern_ discussed later addresses these drawbacks.
+
+ #### General Purpose Namespace Function
+
+As the complexity of a program grows and some parts of code get split into different files and included conditionally, it becomes unsafe to just assume that your code is the first to define a certain namespace or a property inside of it. 
+
+Therefore, it's best to check first that it doesn't already exist
+
+```javascript
+if (typeof MYAPP === 'undefined') {
+  let MYAPP = {};
+}
+
+// or shorter
+let MYAPP = MYAPP || {};
+```
+
+Added checks can quickly result in a lot of repeating code. That's why it's handy to have a reusable function that takes care of the namespacing details. Let's call this function `namespace()` and use it like so:
+
+```javascript
+MYAPP.namespace('MYAPP.module.modules2');
+```
+
+An example nondestructive implementation (if a namespace exists, it won't be re-created):
+
+```javascript
+var MYAPP = MYAPP || {};
+
+MYAPP.namespace = function (ns_string) {
+  let parts = ns_string.split('.'),
+  parent = MYAPP,
+  i;
+
+  // strip redundant leading global
+  if (parts[0] === 'MYAPP') {
+    parts = parts.slice(1);
+  }
+
+  for (i = 0; i < parts.length; i += 1) {
+    // create a property if it doesn't exist
+    if (typeof parent[parts[i]] === 'undefined') {
+      parent[parts[i]] = {};
+    }
+    parent = parent[parts[i]];
+  }
+  return parent;
+};
+```
+# OCP: Declaring Dependencies
+JavaScript libraries are often modular and namespaced, which enables oyu to include only the modules oyu require.
+It's a good idea to declare the modules your code relies on at the top of your function or module. The declaration involes creating only a local variable and pointing to the desired module
+
+```javascript
+let myFunction = function () {
+  // dependencies
+  let event = YAHOO.util.Event,
+      dom = YAHOO.util.Dom;
+  
+  // use event and dom variables
+  // for the rest of the function...
+}
+```
+
+This is an extremly simple pattern, but at the same time it has numerous benefits:
+
+* Explicit declaration of dependencies signals to the user of your code specific script files that they need to make sure are included at the page
+* Upfront declaration at the top of the function makes it easy to find and resolve dependencies
+* Working with a local variable is always faster than working with a global and even faster that working with nested properties of a global variable
+* Smaller code after minification
+# OCP: Private Properties and Methods
+Javascript has no special syntax to denote private, protected or public properties and methods. All objects members are public.
+
+* private properties inside constructors
+* private properties in object literals
+* private properties with prototypes
+
+ ### Private members
+
+You can implement them using a __closure__. Your constructor functions create a closure and any variables that are part of the closure scope are not exposed outside the constructor. However, these private variables are available to the public methods defined inside the constructor and exposed as part of the returned objects.
+
+Let's see an example where `name` is a private member, not accessible outside the constructor:
+
+```javascript
+function Gadget() {
+  // private member
+  let name = 'iPod';
+  // public function
+  this.getName = function () {
+    return name;
+  };
+}
+let toy = new Gadget();
+
+// 'name' is undefined, it's private
+console.log(toy.name); // undefined 
+
+// public method has access to 'name'
+console.log(toy.getName()); // 'iPod'
+```
+
+As you can see, it's easy to achieve privacy in JavaScript. All you need to do is wrap the data you want to keep private in a function and make sure it's local to the function, which means not making it available ouside the function.
+
+ ### Privileged members
+
+It's just a name given to the public methods that have access to the private members.
+
+ ### Privacy Failures
+
+There are some edge cases when you're concerneda bout privacy:
+
+* Some earlier versions of Firefox enable a second parameter to be passed to `eval()` that is a context object enabling you to sneak into the private scope of the function. These edge cases don't apply to widely used browsers today.
+
+* When you're directly returning a private variable from a privilegd method and this variable happens to be an object or array, then outside code can modify the private variable because it's passed __by reference__.
+
+ ### Object Litrals and Privacy
+
+As you saw before, all you need is a function to wrap the private data. YOu can use the clousure created by an additional anonymous immediate function.
+
+```javascript
+let myobj;
+(function () {
+  // private members
+  let name = "my, oh my";
+
+  // implement the public part
+  // note -- no 'var'
+  myobj = {
+    // privileged method
+    getName: function () {
+      return name;
+    }
+  };
+}());
+
+myobj.getName(); // 'my, oh my'
+```
+
+The same idea but with slightly different implementation:
+
+```javascript
+let myobj = (function() {
+  // private members
+  let name = "my, oh my";
+
+  // implement the public part
+  return {
+    getName: function () {
+      return name;
+    }
+  };
+}());
+```
+
+This example is also the bare bones of what is known as "module pattern".
+
+ ### Prototypes and Privacy
+
+One drawback of the private members when used with constructors is that they are re-created every time the constructor is invoked to create a new object.
+
+This is actually a problem with any members you add to `this` inside of constructor. To avoid the dupplication of effort and save memory, you can add common properties and methods to the `prototype` property of the constructor. This way common parts are shared among all the instances created with the same constructor. you can also share the hidden private members among the instances. 
+
+To do so, you can use the combination of two patterns:
+
+* private properties inside constructors
+* private properties in object literals
+
+Because the `prototype` property is just an object, it can be created with the object literals.
+
+```javascript
+function Gadget() {
+  // private member
+  let name = 'iPod';
+  // public function
+  this.getName = function () {
+    return name;
+  };
+}
+
+Gadget.prototype = (function () {
+  // private member
+  let browser = 'Mobile Webkit';
+  // public prototype members
+  return {
+    getBrowser: function () {
+      return browser;
+    }
+  };
+}());
+
+let toy = new Gadget();
+console.log(toy.getName()); // privilegd 'own' method
+console.log(toy.getBrowser()); // priileged prototype method
+```
+# OCP: Revelation Pattern
+The revelation pattern is about __having private methods, which you also expose as public methods__. This could be useful when all the functionality in an object is critical for the workings of the object and you want to protect it as much as possible. But at the same time, you want to provide public access to some of this functionality because that could be useful too. 
+
+When you expose methods publicly, you make them vulnerable, some of the users of your public API may modify it, even involuntarily. __In ES5, you have the option to freeze an object__.
+
+```javascript
+let myarray;
+
+(function () {
+  let astr = '[object Array]',
+      toString = Object.prototype.toString;
+  
+  function isArray(a) {
+    return toString.call(a) === astr;
+  }
+
+  function indexOf(haystack, needle) {
+    var i = 0,
+        max = haystack.length;
+    for (; i < max; i += 1) {
+      if (haystack[i] === needle) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  myarray = {
+    isArray: isArray,
+    indexOf: indexOf,
+    inArray: indexOf
+  };
+}());
+```
+
+Here you have two private variables and two private functions `isArray()` and `indexOf()`. Toward the end of the immediate function, the object `myarray` is populated with the functionality you decide is appropiate to make publicly available.
+
+Now if something unexpected happens, for example, to public `indexOf()`, the private method is still safe and therefore `isArray()` will continue to work.
+
+```javascript
+myarray.indexOf = null;
+myarray.inArray(['a','b','z'], 'z'); // 2
+```
