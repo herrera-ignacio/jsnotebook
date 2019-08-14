@@ -129,9 +129,11 @@ Basic objects upon which all other objects are based.
     * arguments
     
 # Docs Reference: ES6, ES7, ES8, ES9
- ## ES6
+ ## ES6 (2015)
 
 [Features: Overview & Comparison](http://es6-features.org/#Constants)
+
+ES6 can't compile directly in browsers, so we need a compiler such as _babel_ from ES6 to ES5.
 
 * __Constants__
 * __Scoping__ (without hoisting)
@@ -209,7 +211,41 @@ Basic objects upon which all other objects are based.
     * Currency Formatting
     * Date/Time Formatting
 
- ## ES7
+ ## ES7 (2016)
+
+They decided to release a new version of ECMAScript every year starting in 2015. A yearly update means no more big releases like ES6.
+
+* Array.prototype.includes()
+* Exponentiation operator
+
+ ## ES8 (2017)
+
+* __Async Functions__
+    * Async
+    * Await
+* __Shared memory and atomics__
+    * Atomics
+    * SharedArrayBuffer
+    * [More info](https://2ality.com/2017/01/shared-array-buffer.html)
+* Object.values
+* Object.entries
+* Object.getOwnPropertyDescriptors
+* String padding
+* Trailing commas in function parameters lists and calls
+
+ ## ES9 (2018)
+
+* [__Asynchronous Iteration__](https://2ality.com/2016/10/asynchronous-iteration.html)
+* __Rest/Spread properties__
+* __Promise.prototype.finally__
+* Template literal revision
+* RegExp features
+    * [Named capture groups](https://2ality.com/2017/05/regexp-named-capture-groups.html)
+    * [Unicode property escapes](https://2ality.com/2017/07/regexp-unicode-property-escapes.html)
+    * [Lookbehind assertions](https://2ality.com/2017/05/regexp-lookbehind-assertions.html)
+    * [s(dotAll) flag](https://2ality.com/2017/07/regexp-dotall-flag.html)
+
+
 # Fundamentals: Intro
 Few important concepts
 
