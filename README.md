@@ -1,5 +1,15 @@
 # Javascript
 
+# Structural Pattern: Strategy
+The strategy pattern is used to create an interchangeable family of algorithms from which the required process is chosen at run-time.
+
+An example would be solving the problem of form validation. You can create one validator object with a `validate()` method. This is the method that will be called regardless of the concrete type of form and will always return the same result: a list of data that didn't validate and any error messages.
+
+But depending on the concrete form, and the data to be validated, the clientes of your validator may choose different types of checks. Your validator picks the best _strategy_ to handle the task and delegates the concreta data checks to the appropiate algorithm. 
+
+ #### Data Validation Example
+
+
 # Index
 
 Reference docs
@@ -2690,9 +2700,9 @@ You inherit everytinhg there is in the parent, and at the same time it's safe to
 
 Parent constructor is called twice, so it could be inneficient. At the end, own properties get inherited twice.
 # CRP Classical: Temporary Constructor - Proxy
-Breakes the direct link between parent's and child's prototype while at the same time benefiting from the prototype chain. Here the child __only inherits properties of the prototype__, which is usually preferable, as it should be the fplace for reusable functionality. In this pattern, __any member that the parent constructors adds to `this` are not inherited__.
+Breakes the direct link between parent's and child's prototype while at the same time benefiting from the prototype chain. Here the child __only inherits properties of the prototype__, which is usually preferable, as it should be the place for reusable functionality. In this pattern, __any member that the parent constructors adds to `this` are not inherited__.
 
-You have an empty function `F()` which serves as a proxy between child and parent. `F()`'s `prototype` property points to the prototypfe of the parent. The prototype of the child is an instance of the blank function.
+You have an empty function `F()` which serves as a proxy between child and parent. `F()`'s `prototype` property points to the prototype of the parent. The prototype of the child is an instance of the blank function.
 
 ```javascript
 function inherit (C, P) {
@@ -2936,4 +2946,344 @@ twosay('yo'); // 'yo, another object'
 
 ```javascript
 let newFunc = obj.someFunc.bind(myobj, 1, 2, 3);
+```
+# Design Patterns
+We are going to study design patterns from the 'Gang of Four' book, that offer solutions to common problems related to the object-oriented software design. These patterns have been studied for many years, mainly from the perspective of strongly typed static-class languages such as C++ and Java.
+
+JavaScript, being an __untyped dynamic prototype-based language__, sometimes makes it surprisingly easy, even trivial, to implement some of these patterns.
+# Creational Pattern: Singleton
+The singleton pattern ensures that only one object of a particular class is ever created. All further references to objects of the singleton class refer to the same underlying instance.
+
+In JavaScript there are no classes, just objects. When you create a new object, there's actually no other object like it, and is already a singleton. In JavaScript, objects are never equal unless they are the same object, so even if you create an identical object with the same exact members, it won't be the same as the first one.
+
+The verbatim definition for singleton doesn't technically makes sense for JavaScript.
+
+ #### Using `new`
+
+The idea is that when you use `new` to create several objects using the same constructors, you should get only new pointers to the same exact object.
+
+You need the `Parent` constructor to __cache the object instance__ `this` when it's created and then return it the second time the constructor is called.
+
+ #### Instance in a Static Property
+
+```javascript
+function Universe() {
+  
+  // do we have an existing instance?
+  if (typeof Universe.instance === 'object') {
+    return Universe.instance;
+  }
+
+  // proceed as normal
+  this.start_time = 0;
+  this.bang = 'Big';
+
+  // cache
+  Universe.instance = this;
+
+  // implicit return:
+  // return this;
+}
+
+// testing
+let uni = new Universe();
+let uni2 = new Universe();
+uni === uni2; // true
+```
+
+ #### Instance in a Closure
+
+A drawback, is that the rewritten function will lose any properties added to it between the moment of intial definition and the redefinition. In our specific case, anything you ad to the prototype of `Universe()` will not have a link to the instance created with the original implementation. So I will add some tweaks in the implementation for this to work.
+
+```javascript
+function Universe() {
+  
+  // the cached instance
+  let instance;
+
+  // rewrite the constructor
+  Universe = function () {
+    return instance;
+  }
+
+  // carry over the prototype properties
+  Universe.prototype = this;
+
+  // the instance
+  instance = new Universe();
+
+  // reset the constructor pointer
+  instance.constructor = Universe;
+
+  // all the functionality
+  this.start_time = 0;
+  this.bang = 'Big';
+
+  return instance;
+}
+```
+
+# Creational Pattern: Factory
+The factory pattern is used to replace class constructors, abstracting the process of object generation so that the type of the object instantiated can be determined at run-time.
+
+* Performs repeating operations when setting up similar objects.
+* Offers a way for the customers of the factory to create objects without knowing the specific type (class) at compile time.
+
+The second advantaje is more important in static class languages in which it may be nontrivial to create instances of clasesses which are not known in advance (compile time).
+
+First, let's see how the finished implementation will be used:
+
+```javascript
+let corolla = CarMaker.factory('Compact');
+let solstice = CarMaker.factory('Convertible');
+let cherokee = CarMaker.factory('SUV');
+corolla.drive(); // 'Vroom, I have 4 doors!'
+```
+
+There are no constructors used with `new` or any object literals in sight, just a function that creates objects based on a type identified by a string.
+
+Blueprint
+```javascript
+// parent constructor
+function CarMaker() {}
+
+// a method of the parent
+CarMaker.prototype.drive = function () {
+  return `Vroom, I have ${this.doors} doors`;
+};
+
+// the static factory method
+CarMarker.factory = function (type) {
+  let constr = type,
+      newcar;
+
+  // error if the constructor doesn't exist
+  if (typeof CarMaker[constr] !== 'function') {
+    throw {
+      name: "Error",
+      nessage: `${constr} doesn't exist`
+    };
+  }
+
+  // at this point the constructor is known to exist
+  // let's have it inherit the parent but only once
+  if (typeof CarMaker[constr].prototype.drive !== 'function') {
+    CarMaker[constr].prototype = new CarMaker();
+  }
+
+  // create a new instance
+  newcar = new CarMaker[constr]();
+  // optionally call some methods and then return...
+  return newcar;
+};
+
+// define specific car makers
+CarMaker.Compact = function () {
+  this.doors = 4;
+};
+CarMaker.Convertible = function () {
+  this.doors = 2;
+};
+CarMaker.SUV = function () {
+  this.doors = 16;
+};
+```
+
+ #### Built-in Object Factory
+
+Consider the built-in global `Object()` constructor. It also behaves as a factory. It creates different objects depending on the input. If you pass it a primitive number, it can create an object with the `Number()` constructor behind the scenes. The same is true for the string and boolean values.
+# Behavioural Pattern: Iterator
+> The iterator pattern is used to provide a standard interface for traversing a collection of items in an aggregate object without the need to understand its underlying structure.
+
+You have an object containing some sort of aggregate data. This data may be sorted internally in a complex structure, and you want to provide easy access to each element of that structure. The consumer of your object doesn't need to know how you structure your data, all they need is to work with the individual elements.
+
+Your objects needs to provide a `next()` method. Calling `next()` in sequence must return the next consecutive element, where it's up to you to decide what 'next' means in your particular data structure.
+
+You should be able to access each data element like so:
+
+```javascript
+let element;
+while (element = agg.next()) {
+  // do something with the element ...
+  console.log(element);
+}
+```
+
+The aggregate object usually also provides a convenience `hasNext()` method, so the users can determine if they've reached the end of you data.
+
+```javascript
+while (agg.hasNext()) {
+  // do something with the next element...
+  console.log(agg.next());
+}
+```
+
+ #### Implementation
+
+It makes sense to privately store the data and a pointer (index) to the next available element.
+
+To provide easiear access and ability to iterate several times over the data, your object may provideadditional convenience methods:
+
+* `rewind()`
+* `current()`
+
+Blueprint
+```javascript
+let agg = (function() {
+  let index = 0,
+  data = [1,2,3,4,5],
+  length = data.length;
+
+  return {
+    next: function () {
+      let element;
+      if (!this.hasNext()) {
+        return null;
+      }
+      element = data[index];
+      index = index + 1;
+      return element;
+    },
+    
+    hasNext: function () {
+      return index < length;
+    },
+
+    rewind: function () {
+      index = 0;
+    },
+
+    current: function () {
+      return data[index];
+    }
+
+  };
+}());
+```
+# Structural Pattern: Decorator
+> The decorator pattern is used to extend or alter the functionality of objects at run-time by wrapping them in an object of a decorator class. This provides a flexible alternative to using inheritance to modify behaviour.
+
+When dealing with static classes, this could be a challenge. In JavaScript objects are mutable, so the process of adding functionality to an object is not a problem in itself.
+
+A convenient feature of the decorator pattern is the customization and configuration of the expected behavior. You start with your plain object, which has some basic functionality. Then you pick and choose from an available pool of decorators which ones you want to use to enchance your plain object and in which order, if the order is important.
+
+ #### Usage
+
+```javascript
+let sale = new Sale(100); // the price is 100 dollars
+sale = sale.decorate('fedtax'); // add federal tax
+sale = sale.decorate('quebec'); // add provincial tax
+sale = sale.decorate('money'); // format like money
+sale.getPrice(); // '$112.88
+```
+
+ #### Implementation
+
+The implementation starts with a constructor and a prototype method
+
+```javascript
+function Sale(price) {
+  this.price = price || 100;
+}
+Sale.prototype.getPrice = function () {
+  return this.price;
+};
+Sale.prototype.decorate = function (decorator) {
+  let F = function () {},
+  overrides = this.constructor.decorators[decorator],
+  i,
+  newobj;
+
+  F.prototype = this;
+  newobj = new F();
+  newobj.uber = F.prototype;
+  for (i in overrides) {
+    if (overrides.hasOwnProperty(i)) {
+      newobj[i] = overrides[i];
+    }
+  }
+  return newobj;
+}
+
+Sale.decorators = {};
+
+Sale.decorators.fedtax = {
+  getPrice: function () {
+    let price = this.uber.getPrice();
+    price += price * 5 / 100;
+    return price;
+  }
+};
+
+Sale.decorators.quebec = {
+  getPrice: function () {
+    let price = this.uber.getPrice();
+    price += price * 7.5 / 100;
+    return price;
+  }
+};
+
+Sale.decorators.money = {
+  getPrice: function () {
+    return `$${this.uber.getPrice().toFixed(2)}`;
+  }
+};
+
+Sale.decorators.cdn = {
+  getPrice: function () {
+    return `CDN$${this.uber.getPrice().toFixed(2)}`;
+  }
+};
+```
+
+ #### Implementation with list
+
+This implementation benefits from the dynamic nature of JavaScript and doesn't need to use inheritance at all. Instead of having each decorated method call the method previously in the chain, we can simply pass the result of the previous method as a parameter to the next method.
+
+```javascript
+function Sale(price) {
+  this.price = price || 100;
+  this.decorators_list = [];
+}
+Sale.prototype.getPrice = function () {
+  let price = this.price,
+  i,
+  max = this.decorators.list.length,
+  name;
+
+  for (i = 0; i < max; i++) {
+    name = this.decorators_list[i];
+    price = Sale.decorators[name].getPrice(price);
+  }
+  return price;
+};
+Sale.prototype.decorate = function (decorator) {
+  this.decorators_list.push(decorator);
+}
+
+Sale.decorators = {};
+
+Sale.decorators.fedtax = {
+  getPrice: function (prince) {
+    return price * 5 / 100;
+  }
+};
+
+Sale.decorators.quebec = {
+  getPrice: function (price) {
+    return price * 7.5 / 100;
+  }
+};
+
+Sale.decorators.money = {
+  getPrice: function () {
+    return `$${this.uber.getPrice().toFixed(2)}`;
+  }
+};
+
+Sale.decorators.cdn = {
+  getPrice: function () {
+    return `CDN$${this.uber.getPrice().toFixed(2)}`;
+  }
+};
 ```
