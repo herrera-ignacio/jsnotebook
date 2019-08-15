@@ -2573,3 +2573,367 @@ let Person = function (name) {
 a = new Person('Adam');
 console.log(a.getName()); // Adam
 ```
+# Intermediate: Code Reuse Patterns
+__Inheritance__ is one way, but it's not te only way. You can use __object composition__, __mix-ins__, and borrow only the functionality you need without technically inheriting anything permanently.
+
+Keep in mind the Gang of Four advice:
+
+> Prefer object composition to class inheritance
+
+ #### Classical vs Modern Inheritance Patterns
+
+_Classical inheritance_ is just a play on the word __class__. Many program languages have the notion of classes as blueprints for objects. in those langauges every object is an _instane_ of a specific class and an object cannot be created if the class for it doesn't exist.
+
+In JavaScript, because there are no classes, the notion of instances of classes doesn't make much sense. Objects in JavaScript are simply key-value pairs, which you can create and change on the fly. Bu JavaScript has constructor functions, and th syntax of the `new` operator resembles a lot the syntax of using classes.
+
+Implementations that assume classes, are called "_classical_". Let's also say that "_modern_" are other patterns that do no t require you to think about classes.
+
+You should always strive for picking a modern pattern, unless the team is really uncomfortable if there are no classes involved.
+
+ #### Disclaimer (CRP)
+
+From now on, I'll make references to Code Reuse Patterns as __CRP__.
+# Intermediate: Classical Inheritance
+The goal of implementical classical inheritance is to __have objects created by one constructor function__ `Child()` and __get properties that come from another constructor__ `Parent`.
+
+The `inherit()` function is not provided by the language, so you have to implement it yourself. (This has changed with 'ES6 _Classes_'.
+
+```javascript
+// the parent constructor
+function Parent(name) {
+  this.name = name || 'Adam';
+}
+
+// adding functionality to the prototype
+Parent.prototype.say = function () {
+  return this.name;
+};
+
+// empty child constructor
+function Child(name);
+
+// inheritance magic happens here
+inherit(Child, Parent);
+```
+
+Let's see several approaches to implementing it in a generic way.
+
+# CRP Classical: Default Pattern
+Create an object using the `Parent()` constructor and assign this object to the `Child()`'s prototype.
+
+```javascript
+function inherit(C, P) {
+  C.prototype = new P();
+}
+```
+
+ #### Following the Prototype Chain
+
+Using this pattern you inherit both own properties (instance-specific properties added to `this`, such as `name`) and __prototype__ properties and methods as __reference__.
+
+ #### Drawbacks
+
+You inherit both own properties added to `this` and prototype properties. Most of the times you don't want the own properties, because they are likely to be specific to one instance and not reusable.
+
+Another thing is that `inherit()` function doesn't allow you to pass parameters to the child constructor, which the child then passes to the parent.
+# CRP Classical: Rent a Constructor
+This solves the problem os passing arguments from the child to the parent. It borrows the parent constructor, passing the child object to be bound to `this` and also forwarding any arguments.
+
+```javascript
+function Child(a, b, c, d) {
+  Parent.apply(this, arguments);
+}
+```
+
+This way you can only inherit properties aded to `this` inside the parent constructor. You don't inerit members that were added to the prototype. The children objects get copies of the inherited members, unlike the _default pattern_ where they only get references.
+
+ #### Multiple inheritance by Borrowing Constructors
+
+It's possible to implement multiple inheritance simply by borrowing from more than one constructor.
+
+```javascript
+function Cat() {
+  this.legs = 4;
+  this.say = function () {
+    return 'meow';
+  }
+}
+
+function Bird() {
+  this.wings = 2;
+  this.fly = true;
+}
+
+function CatWings() {
+  Cat.apply(this);
+  Bird.apply(this);
+}
+
+var jane = new CatWings();
+console.log(jane); // legs, say, wings, fly
+```
+# CRP Classical: Rent and Set Prototype
+Combining the previous two patterns, you first borrow the constructor and then also set the child's prototype to point to a new instance of the constructor.
+
+```javascript
+function Child(a, b, c, d) {
+  Parent.apply(this, arguments);
+}
+Child.prototype = new Parent();
+```
+
+The benefit is that the result object __get copies of the parent's own members and references to the parent's reusable functionality__. 
+
+You inherit everytinhg there is in the parent, and at the same time it's safe to modify own properties without the risk of modifying the parent.
+
+ #### Drawback
+
+Parent constructor is called twice, so it could be inneficient. At the end, own properties get inherited twice.
+# CRP Classical: Temporary Constructor - Proxy
+Breakes the direct link between parent's and child's prototype while at the same time benefiting from the prototype chain. Here the child __only inherits properties of the prototype__, which is usually preferable, as it should be the fplace for reusable functionality. In this pattern, __any member that the parent constructors adds to `this` are not inherited__.
+
+You have an empty function `F()` which serves as a proxy between child and parent. `F()`'s `prototype` property points to the prototypfe of the parent. The prototype of the child is an instance of the blank function.
+
+```javascript
+function inherit (C, P) {
+  let F = function () {};
+  F.prototype = P.prototype;
+  C.prototype = new F();
+}
+```
+
+Usefull extras
+* Storing the superclass (`uber`)
+* Resetting the Constructor Pointer
+
+```javascript
+function inherit (C, P) {
+  let F = function () {
+    F.prototype = P.prototype;
+    C.prototype = new F();
+    C.uber = P.prototype;
+    C.prototype.constructor = C;
+  }
+}
+```
+
+A common optimization is to avoid creating the temporary (proxy) constructor every time you need inheritance
+
+```javascript
+let inherit = (function () {
+  let F = function () {};
+  return function (C, P) {
+    F.prototype = P.prototype;
+    C.prototype = new F();
+    C.uber = P.prototype;
+    C.prototype.constructor = C;
+  }
+}());
+```
+# CRP Modern: Prototypal Inheritance
+In this pattern there are no classes involved, here __objects inherit from other objects__.
+In ES5, the prototypal inheritance pattern becomes officially a part of the language. This pattern is implemented through the method `Object.create()`.
+
+```javascript
+
+// Idea behind Object.create()
+function object(o) {
+  function F() {};
+  F.prototype = o;
+  return new F();
+}
+
+// object to inherit from
+let parent = {
+  name: 'Papa'
+};
+
+// new object
+let child = object(parent);
+
+console.log(child.name); // Papa
+```
+
+Here `child` always start as an empty object, and has all the functionality of its parent by benefiting from the `__proto__` link.
+
+ ### Dicussion
+
+The parent doens't need to be created with the literal notation. You can have constructor functions create the parent. Note that if you do so, both 'own' properties and properties of the constructor's prototype will be inherited. 
+
+If you want to only inherit the prototype object of an existing constructor:
+
+```javascript
+// parent constructor
+function Person() {
+  // an 'own' property
+  this.name = 'Adam';
+}
+
+// a property added to the prototype
+Person.prototype.getName = function() {
+  return this.name;
+};
+
+// inherit
+let kid = object(Person.prototype);
+```
+
+ ### ES5 Implementation
+
+```javascript
+// Prototype Inheritance
+var child = Object.create(parent);
+
+// Inherit and add more properties
+var child = Object.create(parent, {
+    age: { value: 2 }
+}
+```
+# CRP Modern: Copying Properties
+An object gets funcitonality from another object, simply by copying it.
+
+> ES6 - Class and Extend
+
+```javascript 
+function extend(parent, child) {
+  let i;
+      child = child || {};
+  for (i in parent) {
+    if (parent.hasOwnProperty(i)) {
+      child[i] = parent[i];
+    }
+  }
+  return child;
+}
+```
+
+This is just looping through the parent's members and copying them over. In this implementation `child` is optional, if you don't pass an existing object to be augmented, then a brand new object is created and returned.
+
+This could lead to undesired behavior when working with oher objects and arrays.
+Let's modify `extend()` function to make deep copies.
+
+```javascript
+function extendDeep(parent, child) {
+  let i,
+  toStr = Object.prototype.toString,
+  astr = '[object Array]';
+
+  child = child || {};
+
+  for (i in parent) {
+    if (parent.hasOwnProperty(i)) {
+      if (typeof parent[i] === 'object') {
+        child[i] = (toStr.call(parent[i]) === astr) ? [] : {};
+        extendDeep(parent[i], child[i]);
+      } else {
+        child[i] = parent[i];
+      }
+    }
+  }
+  return child;
+}
+```
+# CRP Modern: Mix-ins
+Instead of copying from one object, you can copy from any number of objects and mix them all into a new object.
+
+The implementation is a loop through arguments and copy every property of every object passed to the function.
+
+```javascript
+function mix() {
+  let arg, prop, child = {};
+  for (arg = 0; arg < arguments.length; arg++) {
+    for (prop in arguments[arg]) {
+      if (arguments[arg].hasOwnProperty(prop)) {
+        child[prop] = arguments[arg][prop];
+      }
+    }
+  }
+  return child;
+}
+```
+
+Use example:
+```javascript
+let cake = mix(
+  { eggs: 2, large: true },
+  { butter: 1, salted: true },
+  // will overwrite large property!
+  { sugar: 'sure!', large: false}
+)
+```
+# CRP Modern: Borrowing Methods
+
+You may only want one or two mehods of an existing objects. You want to reus them, but you don't really want to form a parent-child relationship with that object.
+
+This method benefits from the function methods `call()` and `apply()`.
+You pass your bject and any parameters, and the borrowed method binds your object as its own this. Basically, your objects pretends to be the other object for a bit to benefit from the method you like.
+
+Remember difference within `call()` and `apply()` is just that one takes an array of parameters and the other one takes parameters one by one.
+
+```javascript
+// call() example
+notmyobj.doStuff.call(myobj, param1, p2, p3);
+
+//apply() example
+notmyobj.doStuff.call(myobj, [param1, p2, p3]);
+```
+
+ #### Example: Borrow from Array
+
+```javascript
+function f() {
+  let args = [].slice.call(arguments, 1, 3);
+  return args;
+}
+
+// example
+console.log(f(1,2,3,4,5,6)); // [2,3]
+```
+
+ ### Borrow and Bind
+
+> ES5 adds a method `bind()` to `Function.prototype`
+
+Sometimes it's best to have the vale of `this` 'locked' or bound to a specific object and predetermined in advance.
+
+```javascript
+let one = {
+  name: 'object',
+  say: function (greet) {
+    return `greet, ${this.name}`
+  }
+};
+
+console.log(one.say('hi'));
+
+let two = {
+  name: 'another object'
+}
+
+console.log(one.say.apply(two, ['hello']));
+```
+
+What about scenarions in which you assing the function pointer to a global variable or you pass the function as a callback?
+
+```javascript
+function bind(o, m) {
+  return function () {
+    return m.apply(o, [].slice.call(arguments));
+  };
+}
+```
+
+This `bind()` function accepts an object `o` and a method `m`, binds the two together, and then returns another function that has access to `o` and `m` via closure.
+
+You can use this like:
+
+```javascript
+let twosay = bind(two, one.say);
+twosay('yo'); // 'yo, another object'
+```
+
+ ### ES5 Bind
+
+```javascript
+let newFunc = obj.someFunc.bind(myobj, 1, 2, 3);
+```
