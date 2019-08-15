@@ -141,7 +141,7 @@ Basic objects upon which all other objects are based.
 
 ES6 can't compile directly in browsers, so we need a compiler such as _babel_ from ES6 to ES5.
 
-* __Constants__
+* __Constants__ `const`
 * __Scoping__ (without hoisting)
     * Block-Scoped Variables: `let`
     * Block-Scoped Functions definitions
@@ -1806,6 +1806,17 @@ Other topics of discussion include:
 * one class-inspired way to define constructors
 
 The following sections, I will make reference to Object Creation Pattern as __OCP__.
+
+ ### Summary
+
+In this section, you will learn different patterns to create objects that go beyond the basic patterns of using __object literals__ and __constructor functions__.
+
+You will learn about the __namespacing pattern__ that keeps the global space clean and helps organize and structure the code. The simple, yet surprisingly __declaring dependencies__ pattern.
+Then, there is a detialed discussion on privacy patterns including __private members, privileged methods__, some edge cases with privacy, the use of object literals with private members and _revealing private methods as public ones_. All these patterns are the building blocks for __module pattern__. 
+
+Then you will learn about the __sandbox pattern__ as an alternative to the long namespacing, which also helps you create independent enviornments for your code and modules.
+
+To wrap up the discussion, we took a look into __object constants, static methods, chaining and method()__.
 # OCP: Namespace pattern
 Namespaces help reduce the number of globals required by our programs at the same time also help avoid naming collisions or excessive name prefixing. 
 
@@ -2099,4 +2110,466 @@ Now if something unexpected happens, for example, to public `indexOf()`, the pri
 ```javascript
 myarray.indexOf = null;
 myarray.inArray(['a','b','z'], 'z'); // 2
+```
+# OCP: Module Pattern
+Provides structure and helps organize your code as it grows. Unlike other languages, JavaScript deosn't have special syntax for packages, but the module pattern provides the tools to create self-contained decoupled pieces of code, which can be treatead as black boxes of cuntionality and added, replaces, or removed according to the (ever-changing) requirements of the software you're writing.
+
+The _module pattern_ is a combination of several paterns described so far in the book, namely:
+
+* Namespaces
+* Immediate functions 
+* Private and privileged members
+* Declaring dependencies
+
+```javascript
+MYAPP.namespace('MYAPP.utilities.array');
+
+MYAPP.utilities.array = (function () {
+  // dependencies
+  let uobj = MYAPP.utilities.object,
+      ulang = MYAPP.utilities.lang,
+
+      // private properties
+      array_string = '[object Array]',
+      ops = Object.prototype.toString;
+
+      // private methods
+      // ...
+
+      // optionally one-time init procedures
+      // ...
+
+  return {
+    // public API
+    inArray: function (needle, haystack) {
+      for (let i = 0, max = haystack.length; i < max; i += 1) {
+        if (haystack[i] === needle) {
+          return true;
+        }
+      }
+    },
+    isArray: function (a) {
+      return ops.call(a) === array_string;
+    }
+  };
+}());
+```
+
+ #### Revealing Module Pattern
+
+The _module pattern_ can be organized in a similar way that the revelation pattern. Where all the methods are kept private and you only expose those that you decide at the end, while setting up the public API.
+
+```javascript
+MYAPP.namespace('MYAPP.utilities.array');
+
+MYAPP.utilities.array = (function () {
+  // dependencies
+  let uobj = MYAPP.utilities.object,
+      ulang = MYAPP.utilities.lang,
+
+      // private properties
+      array_string = '[object Array]',
+      ops = Object.prototype.toString;
+
+      // private methods
+      inArray = function (needle, haystack) {
+        for (let i = 0, max = haystack.length; i < max; i += 1) {
+          if (haystack[i] === needle) {
+            return true;
+          }
+        }
+      },
+      isArray = function (a) {
+        return ops.call(a) === array_string;
+      };
+        
+      // optionally one-time init procedures
+      // ...
+
+  return {
+    // public API
+    isArray: isArray,
+    indexOf: inArray
+  };
+}());
+```
+
+ #### Modules that create Constructors
+
+The preceding example produced an object `MYAPP.utilities.array`, but sometimes it's more convenient to create your objects using constructor functions. You can do this using the _module pattern_ by wrapping the module with the immediate function, so it will return a function at the end and not an object.
+
+```javascript
+MYAPP.utilities.array = (function () {
+  // dependencies
+  let uobj = MYAPP.utilities.object,
+      ulang = MYAPP.utilities.lang,
+
+      // private properties
+      array_string = '[object Array]',
+      ops = Object.prototype.toString;
+
+      // private methods
+      inArray = function (needle, haystack) {
+        for (let i = 0, max = haystack.length; i < max; i += 1) {
+          if (haystack[i] === needle) {
+            return true;
+          }
+        }
+      },
+      isArray = function (a) {
+        return ops.call(a) === array_string;
+      };
+        
+      // optionally one-time init procedures
+      // ...
+
+  // public API -- prototype
+  Constr.prototype = {
+    constructor: MYAPP.utilities.Array,
+    version: "2.0",
+    toArray: function (obj) {
+      for (let i = 0, a = [], len = obj.length; i < len; i++) {
+        a[i] = obj[i];
+      }
+      return a;
+    }
+  };
+
+  // return the constructor
+  // to be assigned to the new namespace
+  return Constr;
+}());
+
+// You can use the constructor like so
+let arr = new MYAPP.utilities.Array(obj);
+```
+
+ #### Important Globals into a Module
+
+In a common variation of the pattern, you can pass any arguments to the immediate function what wraps the module, but usually these references to global variables and even the global object itself.
+
+```javascript
+MYAPP.utilities.module = (function (app, global) {
+  // references to the global object
+  // and to the global app namespace object
+  // are now localized
+}(MYAPP, this));
+```
+# OCP: Sandbox Pattern
+The _sandbox pattern_ addresses the drawbacks of the _namespacing pattern_. 
+
+* Reliance on a single global global variable to be the application's global.
+* Long dotted names to type and resolve at runtine.
+
+The _sandbox pattern_ provides an environment for the modules to "play" without affecting other modules and their personal sandboxes.
+
+ #### A Global Constructor
+
+The __single global is a constructor__, let's call it _SandBox_. You create objects using this constructor, and you also pass a callback function which becomes the isolated sandboxed enviornment for your code.
+
+```javascript
+new SandBox(function (box) {
+    // your code here...
+)};
+```
+
+You can protect the global namespace by haaving your code wrapped into callback functions. If you need, you can also use the fact that functions are objects and store some data as 'static' properties of the constructor. And finally, you can have different instanes depending on the type of modules you need and those instances work independently of each other.
+
+Let's add two more things to the pattern:
+* You can assume `new` and not require it when creating the object
+* The `Sandbox()` constructor can accept an additional configuration argument specifying names of modules required for this object instance. We want the code to be modular so most of the functionality provided will be contained in modules.
+
+For convenience, let' also say that when no modules are passed, the sandbox will asume the wildcard '*' (use all available modules). 
+
+So you can use all available modules like so:
+
+```
+Sandbox('*', function (box) {
+    // console.log(box);
+});
+
+Sandbox(function (box) {
+    // console.log(box);
+});
+```
+
+ #### Adding Modules
+
+In this example, we'll add modules `dom`, `event`, and `ajax`, which are common pieces of functionality in every library or web app. 
+
+```javascript
+Sandbox.modules = {};
+
+Sandbox.modules.dom = function (box) {
+  box.getElement = function () {};
+  box.getStyle = function () {};
+  box.foo = 'bar';
+};
+
+Sandbox.modules.event = function (box) {
+  // access to the Sandbox prototype if needed
+  // box.constructor.prototype.m = 'mmm';
+  box.attachEvent = function () {};
+  box.detachEvent = function () {};
+};
+
+Sandbox.modules.ajax = function (box) {
+  box.makeRequest = function () {};
+  box.getResponse = function () {};
+};
+```
+
+ #### Implementing the Constructor
+
+Finally let's implement the `Sandbox()` constructor.
+
+```javascript
+function Sandbox() {
+  // turning args into an array
+  let args = Array.prototype.slice.call(arguments),
+  // the last argument is the callback
+      callback = args.pop(),
+  // modules can be passed as an array or as individual parameters
+      modules = (args[0] && typeof args[0] === 'string') ? args : args[0],
+      i;
+
+  // make sure the function is called
+  // as constructor
+  if (!(this instanceof Sandbox)) {
+    return new Sandbox(modules, callback);
+  }
+
+  // add properties to `this` as needed
+  this.a = 1;
+  this.b = 2;
+
+  // now add modules to the core `this` object
+  // no modules or '*' both mean 'use all modules'
+  if (!modules || modules === '*') {
+    modules = [];
+    for (i in Sandbox.modules) {
+      if (Sandbox.modules.hasOwnProperty(i)) {
+        modules.push(i);
+      }
+    }
+  }
+
+  // initialize the required modules
+  for (i = 0; i < modules.length; i++) {
+    Sandbox.modules[modules[i]](this);
+  }
+
+  // call the callback
+  callback(this);
+}
+
+// any prototype properties as needed
+Sandbox.prototype = {
+  name: "My Application",
+  version: "1.0",
+  getName: function () {
+    return this.name;
+  }
+};
+```
+
+Important details about the implementation:
+
+* There's a check wether `this` is an instance of `Sandbox` and if not (meaning `Sandbox()` was called without `new`) we call the function again as a constructor.
+
+* You can add properties to `this` inside the constructor
+
+* You can add properties to the prototype of the constructor 
+
+* Required modules can be passed as an array of module names, or as individual arguments, or with the * wildcard (or omitted).
+
+* When we know the required modules, we initialize them, which means we call the function that implements each module
+
+* The last argument to the constructor is the callback, that will be invoked at the end using the newly created instance. It gets the box object populated with all the requested functionality.
+# OCP: Static members
+Static properties and methods are those that don't change from one instance to another, they're __only available at the constructor__.
+
+Static properties (both _private_ and _public_) can be quite handy. They can contain methods and data that are __not instance-specific__ and __don't get re-created with every instance__.
+
+ ### Public Static Members
+
+In JavaScript there's no special syntax to denote static members. But you can have the same syntax as in 'classy' language by using a constructor function and adding properties to it. This works because constructors, like all other functions, are objects and they can have properties.
+
+Static methods don't need a particular object to figure out what to return.
+
+```javascript
+// constructor
+let Gadget = function() {};
+
+// a static method
+Gadget.isShiny = function () {
+  return 'you bet';
+}
+
+// a normal method added to the prototype
+Gadget.prototype.setPrice = function (price) {
+  this.price = price;
+};
+```
+
+Attempting to call an instance method statically won't work, same for calling a static method using an instance.
+
+```javascript
+typeof Gadget.setPrice; // 'undefined'
+typeof iphone.isShiny; // 'undefined'
+```
+
+Sometimes it could be convenient to have the static methods working with an instance too.
+
+```javascript
+Gadget.prototype.isShiny = Gadget.isShiny;
+iphone.isShny(); // 'you bet'
+```
+
+In such cases, you need to be careful if you use `this` inside the static method as it will refer to the constructor function.
+
+You can use `instanceof` to help determine how the method was called
+
+```javascript
+// constructor
+let Gadget = function(price) {
+  this.price = price;
+};
+
+// a static method
+Gadget.isShiny = function () {
+  
+  // this always works
+  let msg = 'you bet';
+
+  if (this instanceof Gadget) {
+    // this only works if called non-statically
+    msg += `, it costs $${this.price}!`;
+  }
+  
+  return msg;
+}
+
+// a normal method added to the prototype
+Gadget.prototype.isShiny = function () {
+  return Gadget.isShiny.call(this);
+};
+```
+
+ ### Private Static Members
+
+* Shared by all the objects created with the same constructor function
+* Not accesible outside the constructor
+
+```let Gadget = (function() {
+  // static property
+  let counter = 0;
+
+  // returning the new implementation of constructor
+  return function () {
+    console.log(counter += 1);
+  };
+
+}()); // execute immediatly
+
+let g1 = new Gadget(); // logs 1
+let g2 = new Gadget(); // logs 2javascript
+```
+
+The counter could be useful, so why not expose it via a privileged method?
+
+```javascript
+let Gadget = (function() {
+  // static property
+  let counter = 0,
+      NewGadget;
+
+  // returning the new implementation of constructor
+  NewGadget = function () {
+    counter += 1;
+  };
+
+  // privileged method
+  NewGadget.prototype.getLastId = function () {
+    return counter;
+  };
+
+  // overwrite the constructor
+  return NewGadget;
+
+}()); // execute immediatly
+
+let iphone = new Gadget();
+iphone.getLastId(); // 1
+
+let ipod = new Gadget();
+ipod.getLastId(); // 2
+```
+# OCP: Object Constants
+This is rather unnecesary since the new `const` addition with ES6.
+
+If you want to simulate an imutable value, you can create a private property and provide a getter method but no setter.
+# OCP: Chaining Pattern
+This pattern enables you to __call methods on an object one after the other__, without assigning the return values of the previous operations to variables and without having to split oyur calls on multiple lines.
+
+```javascript
+myobj.method1('hello').method2().method3('world').method4();
+```
+
+When you create methods that have no meaningful return value, you can have them return `this`, the instance of the object they are working with. This will enable consumers of that object to call the next method chained to the previous.
+
+```javascript
+let obj = {
+  value: 1,
+  increment: function () {
+    this.value += 1;
+    return this;
+  },
+  add: function (v) {
+    this.value += v;
+    return this;
+  },
+  shout: function () {
+    alert(this.value);
+  }
+};
+
+// chain method calls
+obj.increment().add(3).shout(); // 5
+```
+
+ #### Pros and Cons
+
+You can save some typing and create more concise code that almost reads like a sentence. It helps you think about splitting your functions and creating smaller, more specialized functions. This improves maintainability in the long run.
+
+A drawback is that it gets harder to debug code written this way. 
+# OCP: method() Method
+You can add instance properties to `this` inside of the constructor body. However, __adding methods to `this` is inneficient__, because they end up being re-created with every instance and that consumes more memory. That's why reusable methods should be added to the `prototype` property of the constructor.
+
+The `prototype` may look alien to many developers, so you can hide it behind a method.
+
+The way to define a 'class' using the suger `method()` would look like the following:
+
+```javascript
+// method implementation
+if (typeof Function.prototype.method !== 'function') {
+  Function.prototype.method = function (name, implementation) {
+    this.prototype[name] = implementation;
+    return this;
+  };
+}
+
+// class like implementation
+let Person = function (name) {
+  this.name = name;
+}
+.method('getName', function () {
+  return this.name;
+}).method('setName', function (name) {
+  this.name = name;
+  return this;
+});
+
+a = new Person('Adam');
+console.log(a.getName()); // Adam
 ```
