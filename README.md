@@ -1,15 +1,5 @@
 # Javascript
 
-# Structural Pattern: Strategy
-The strategy pattern is used to create an interchangeable family of algorithms from which the required process is chosen at run-time.
-
-An example would be solving the problem of form validation. You can create one validator object with a `validate()` method. This is the method that will be called regardless of the concrete type of form and will always return the same result: a list of data that didn't validate and any error messages.
-
-But depending on the concrete form, and the data to be validated, the clientes of your validator may choose different types of checks. Your validator picks the best _strategy_ to handle the task and delegates the concreta data checks to the appropiate algorithm. 
-
- #### Data Validation Example
-
-
 # Index
 
 Reference docs
@@ -41,11 +31,44 @@ Intermediate (In-depth)
     * [Immediate function](#function-pattern--immediate-function)
     * [Immediate object initialization](#function-pattern--immediate-object-init)
     * [Load Time Branching](#function-pattern--load-time-branching)
+    * [Memoization](#function-pattern--memoization)
+    * [Configuration Objects](#function-pattern--configuration-objects)
+    * [Currying](#function-pattern--currying)
 * [Intermediate: Promise chaining](#intermediate--promise-chaining)
 * [Intermediate: Async/Await](#intermediate--async-await)
 * [Intermediate: Class vs Prototype](#intermediate--class-vs-prototype)
 * [Intermediate: Prototypal OO](#intermediate--prototypal-oo)
 * [Intermediate: Object Composition](#intermediate--object-composition)
+* [Intermediate: Object Creation Patterns](#intermediate--object-creation-patterns)
+    * [Namespace pattern](#ocp--namespace-pattern)
+    * [Declaring Dependencies](#ocp--declaring-dependencies)
+    * [Private Properties and Methods](#ocp--private-properties-and-methods)
+    * [OCP: Revelation Pattern](#ocp--revelation-pattern)
+    * [Module Pattern](#ocp--module-pattern)
+    * [Sandbox Pattern](#ocp--sandbox-pattern)
+    * [Static members](#ocp--static-members)
+    * [Object Constants](#ocp--object-constants)
+    * [Chaining Pattern](#ocp--chaining-pattern)
+    * [method() Method](#ocp--method---method)
+* [Intermediate: Code Reuse Patterns](#intermediate--code-reuse-patterns)
+    * [Classical Inheritance](#intermediate--classical-inheritance)
+    * [Classical: Default Pattern](#crp-classical--default-pattern)
+    * [Classical: Rent a Constructor](#crp-classical--rent-a-constructor)
+    * [Classical: Rent and Set Prototype](#crp-classical--rent-and-set-prototype)
+    * [Classical: Temporary Constructor - Proxy](#crp-classical--temporary-constructor---proxy)
+    * [Modern: Prototypal Inheritance](#crp-modern--prototypal-inheritance)
+    * [Modern: Copying Properties](#crp-modern--copying-properties)
+    * [Modern: Mix-ins](#crp-modern--mix-ins)
+    * [Modern: Borrowing Methods](#crp-modern--borrowing-methods)
+* [Intermediate: Design Patterns](#intermediate--design-patterns)
+    * [Creational Pattern: Singleton](#creational-pattern--singleton)
+    * [Creational Pattern: Factory](#creational-pattern--factory)
+    * [Behavioural Pattern: Iterator](#behavioural-pattern--iterator)
+    * [Behavioural Pattern: Mediator](#behavioural-pattern--mediator)
+    * [Structural Pattern: Decorator](#structural-pattern--decorator)
+    * [Structural Pattern: Strategy](#structural-pattern--strategy)
+    * [Structural Pattern: Facade](#structural-pattern--facade)
+    * [Structural Pattern: Proxy](#structural-pattern--proxy)
 # Docs Reference: Global_Objects
 Global objects or standard __built in objects__ refers to objects in the global scope.
 
@@ -2947,7 +2970,7 @@ twosay('yo'); // 'yo, another object'
 ```javascript
 let newFunc = obj.someFunc.bind(myobj, 1, 2, 3);
 ```
-# Design Patterns
+# Intermediate: Design Patterns
 We are going to study design patterns from the 'Gang of Four' book, that offer solutions to common problems related to the object-oriented software design. These patterns have been studied for many years, mainly from the perspective of strongly typed static-class languages such as C++ and Java.
 
 JavaScript, being an __untyped dynamic prototype-based language__, sometimes makes it surprisingly easy, even trivial, to implement some of these patterns.
@@ -3160,6 +3183,114 @@ let agg = (function() {
   };
 }());
 ```
+# Behavioural Pattern: Mediator
+> The mediator pattern is used to reduce coupling between classes that communicate with each other. Instead of classes communicating directly, and thus requiring knowledge of their implementation, the classes send messages via a mediator object.
+
+Separated objects need a way to communicate among thenselves in a manner that doens't hurt the maintenance and your ability to safely change a part of the application without breaking the rest of it.
+
+When objects know too much about each other and communicate directly (call each other's methods and change properties) this leads to undesirable __tight coupling__.
+
+When objects are closely coupled, it's not easy to change one objec without affecting many others.  Then even the simplest change in an application is no longer trival, and it's virtually imposible to estimate the time a change might take.
+
+ #### How it works
+
+Mediator pattern promotes __lose coupling__ and helping improve maintainabilit. in this pattern, the independent objects do not communicate directly, but trough a _mediator_ object. When one of the objects (_colleagues_) changes state, it notifies the mediator, and the mediator communicates the change to any other object that should know about it.
+
+ #### Example
+
+Application will be a game where two players are given half a minute to compete for who will press a button more time than the other. A scoreboard is updated with the current score.
+
+* Player 1
+* Player 2
+* Scoreboard
+* Mediator
+
+The mediator knows about all other objects and communicates wit the input device, handles keypress events, determines which player has a turn, a notifies it. The player plays and notifies the mediator that he's done. The mediator communicates the updated score with the scoreboard, which in turn updates the display.
+
+Other tan the mediator, none of the other objects knows anything about any other object.
+
+```javascript
+function Player(name) {
+  this.points = 0;
+  this.name = name;
+}
+Player.prototype.play = function () {
+  this.points += 1;
+  mediator.played();
+}
+
+let scoreboard = {
+  // HTML element to be updated
+  element: document.getElementById('results'),
+
+  // update the score display
+  update: function (score) {
+    let i, msg = '';
+    for (i in score) {
+      if (score.hasOwnProperty(i)) {
+        msg += `<p><strong>${i}</strong>`;
+        msg += `score[i]`;
+        msg += `</p>`;
+      }
+    }
+    this.element.innerHTML = msg;
+  }
+};
+
+let mediator = {
+  // all the players
+  players: {},
+
+  // initialization
+  setup: function () {
+    let players = this.players;
+    players.home = new Player('Home');
+    players.guest = new Player('Guest');
+  },
+
+  // someone plays, update the score
+  played: function () {
+    let players = this.players,
+    score = {
+      Home: players.home.points,
+      Guest: players.guest.points
+    };
+
+    scoreboard.update(score);
+  },
+
+  // handle user interactions
+  keypress: function (e) {
+    e = e || window.event; // IE
+    if (e.which === 49)
+    {
+      // key '1'
+      mediator.players.home.play();
+      return;
+    }
+    if (e.which === 48)
+    {
+      // key '0'
+      mediator.players.guest.play();
+      return;
+    }
+  }
+};
+
+// Set up and tear down the game
+
+// go!
+mediator.setup();
+window.onkeypress = mediator.keypress;
+
+// game over in 30 seconds
+setTimeout(function () {
+  setTimeout(function () {
+    window.onkeypress = null;
+    alert('Game over!');
+  }, 30000);
+});
+```
 # Structural Pattern: Decorator
 > The decorator pattern is used to extend or alter the functionality of objects at run-time by wrapping them in an object of a decorator class. This provides a flexible alternative to using inheritance to modify behaviour.
 
@@ -3287,3 +3418,177 @@ Sale.decorators.cdn = {
   }
 };
 ```
+# Structural Pattern: Strategy
+The strategy pattern is used to create an interchangeable family of algorithms from which the required process is chosen at run-time.
+
+An example would be solving the problem of form validation. You can create one validator object with a `validate()` method. This is the method that will be called regardless of the concrete type of form and will always return the same result: a list of data that didn't validate and any error messages.
+
+But depending on the concrete form, and the data to be validated, the clientes of your validator may choose different types of checks. Your validator picks the best _strategy_ to handle the task and delegates the concreta data checks to the appropiate algorithm. 
+
+ #### Data Validation Example
+
+First, you need to configure the validator and set the rules of what you onsider to be valid and acceptable.
+
+Idea
+```javascript
+validator.config = {
+  first_name: 'isNonEmpty',
+  age: 'isNumber',
+  username: 'isAlphaNum'
+};
+
+validator.validate(data);
+if (validator.hasErrors()) {
+  console.log(validator.messages.join('\n'));
+}
+```
+
+Now let's see how the validator is implemented. The available algorithms for the checks are objects with a predefined interface, they provide a `validate()` method and a one-line help information to be used in error messages.
+
+```javascript
+let validator = {
+  // all available checks
+  types: {},
+
+  // error messages in the current
+  // vaidation session
+  messages: [],
+
+  // current validation config
+  // name: validation type
+  config: {},
+
+  // interface method
+  // `data` is key => value pairs
+  validate: function (data) {
+    let i, msg, type, checker, result_ok;
+
+    // reset all messages
+    this.messages = [];
+
+    for (i in data) {
+      if (data.hasOwnProperty(i)) {
+        type = this.config[i];
+        checker = this.types[type];
+
+        if (!type) {
+          continue; // no need to validate
+        }
+        if (!checker) {
+          throw {
+            name: 'ValidationError',
+            message: `No handler to validate type ${type}`
+          };
+        }
+
+        result_ok = checker.validate(data[i]);
+        
+        if (!result_ok) {
+          msg = `Invalid value for *${i}*, ${checker.instructions}`;
+          this.messages.push(msg);
+        }
+      }
+    }
+    return this.hasErrors();
+  },
+
+  // helper
+  hasErrors: function () {
+    return this.messages.length !== 0;
+  }
+};
+
+// checks for non-empty values
+validator.types.isNonEmpty = {
+  validate: function (value) {
+    return value !== '';
+  },
+  instructions: 'the value cannot be empty'
+};
+
+// checks if a value is a number
+validator.types.isNumber = {
+  validate: function (value) {
+    return !isNaN(value);
+  },
+  instructions: 'the value can only be a valid number'
+};
+
+// checks if the value contains only letters and numbers
+validator.types.isAlphaNum = {
+  validate: function (value) {
+    return !/[^a-z0-9]/i.test(value);
+  },
+  instructions: 'the value can only be alphanumeric'
+};
+```
+# Structural Pattern: Facade
+> The facade pattern is used to define a simplified interface to a more complex subsystem.
+
+Following this practice you'll end up with a greater number of methods than if you have _uber_ methods with lots of parameters. Sometimes two or more methods may commonly be called together, in such cases, it makes sense to create another method that wraps the repeating method calls.
+
+For example, when handling browser events, you have the following methods:
+
+* `stopPropagation()`: traps the event and doesn't let it bubble up to the parent nodes
+
+* `preventDefault()`: doesn't let the browser do the default action (for example, following a link or submitting a form)
+
+These are two separete methods with different purposes, and they should be kept separate, but at the same time, they are often called together. So instead of duplicating the two method calls all over the application, you can create a _facade method_:
+
+```javascript
+let myevent = {
+  // ...
+  stop: function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  // ...
+};
+```
+
+ #### Browser Scripting
+
+The differences between the browsers can be hidden behind a facade. You can add the code that handles the differents in IE's event API.
+
+```javascript
+let myevent = {
+  // ...
+  stop: function (e) {
+    // others
+    if (typeof e.preventDefault === 'function')
+    {
+      e.preventDefault();
+    }
+    if (typeof e.stopPropagation === 'function')
+    {
+      e.stopPropagation();
+    }
+    // IE
+    if (typeof e.returnValue === 'boolean')
+    {
+      e.returnValue = false;
+    }
+    if (typeof e.cancelBubble === 'boolean')
+    {
+      e.cancelBubble = true;
+    }
+  }
+  // ...
+};
+```
+# Structural Pattern: Proxy
+The proxy pattern is used to provide a surrogate or placeholder object, which references an underlying object. The proxy provides the same public interface as the underlying subject class, adding a level of indirection by accepting requests from a client object and passing these to the real subject object as necessary.
+
+__Protects the access to that object__. It's useful for __performance purposes__. The proxy serves as a guardian of the object (_the real subject_), and tries to have the real subject do as little work as possible.
+
+One example use would be something we call _lazy initialization_. If initializing the _the real subject_ is expensive, and it happens that the client intializes it but never actually uses it, the proxy can help by being the interface to the real subject. The proxy receives the initialization request but never passes it on until it's clear that the real subject is actually used.
+
+ #### Example
+
+The _proxy_ pattern is useful when the real subject does something expensive. In web applications, one of the most expensive operations you can do is a __network request__, so it makes sense to combine HTTP requests as much as possible.
+
+An example prox object may try to combine the requests using a simple logic: a 50ms buffer. The client does not call the HTTP service directly but calls the proxy instead. The proxy then waits before forwarding the request. If other calls from the client come in the 50ms waiting period, they will be merged into one. This delay is pretty much imperceptible for the user, but can help combine requests and speed up the experiencie. It also reduces the server load significantly since the web server has to handle a smaller number of requests.
+
+ ### Proxy as Cache
+
+The _proxy_ can go further in protecting the real subject _http_ by caching the results of previous request into a _new cache_ property. Then if the client happens to request information a second time, proxy can pull it out of the cache and save the network roundtrip.
