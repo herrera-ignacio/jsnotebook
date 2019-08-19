@@ -3291,6 +3291,123 @@ setTimeout(function () {
   }, 30000);
 });
 ```
+# Behavioural Pattern: Observer
+> The observer pattern is used to allow an object to publish changes to its state. Other objects subscribe to be immediately notified of any changes.
+
+Another name is __subscriber/pubisher__ pattern.
+All the browser events are examples of the pattern.
+
+The main motivation of this pattern is to promote _loose coupling_. Instead of one object calling another object's method, an object subscribes to another object's specific activity and gets notified. The _suscriber_ is also called _observer_, while the object being observed is called _publisher_ or _subject_. The publisher notifies (calls) all the subscribers when an important event occurs and may often pass a message in the form of an event object. 
+
+ #### Example: Magazine Subscriptions
+
+Let's say you have a publisher _paper_, which publishes a daily newspaper and a monthly magazine. A subscriber _joe_ will be notified whenever that happens. The _paper_ objects need to have a property _subscribers_ that is an array storing all subscribers. When an even occurs, _paper_ loops through the list of subscrier and notifies them. The notification means calling a method of the subscriber object. Therefore, when subscribing, the subscriber provides one of its method to _paper_'s `subscribe()` method.
+
+The _paper_ can also provide `unsubscribe()`, which means removing from the array of subscribers. The last important method of _paper_ is `publish()`, which iwll call the subscribers' methods.
+
+A publisher object needs these members:
+* `susbribers`
+* `subscribe()`
+* `unsusbcribe()`
+* `publish()`
+
+All the three methods need a `type` parameter, because a pubisher may fire several events (magazine, newspaper, etc...) and subscribers may chose to subscribe to one, but not the other.
+
+Because these members are generic for any publisher object, it makes sense to implement them as part of a separate object. Then we can copy them over ([Mix-in pattern](#crp-modern--mix-ins)). to any object and turn any given object into a publisher.
+
+```javascript
+let publisher = {
+  subscribers: {
+    // event type: subscribers
+    any: []
+  },
+  subscribe: function (fn, type) {
+    type = type || 'any';
+    if (typeof this.subscribers[type] === 'undefined') {
+      this.subscribers[type] = [];
+    }
+    this.subscribers[type].push(fn);
+  },
+  unsubscribe: function (fn, type) {
+    this.visitSubscribers('unsubscribe', fn, type);
+  },
+  publish: function (publication, type) {
+    this.visitSubscribers('publish', publication, type);
+  },
+  visitSubscribers: function (action, arg, type) {
+    let pubtype = type || 'any',
+        subscribers = this.subscribers[pubtype],
+        i,
+        max = subscribers.length;
+    
+    for (i = 0; i < max; i += 1) {
+      if (action === 'publish') {
+        subscribers[i](arg);
+      } else {
+        if (subscribers[i] === arg) {
+          subscribers.splice(i, 1);
+        }
+      }
+    }
+  }
+};
+```
+And here's a function that takes an object and turns it into a publisher by simply copying over the generic publisher's methods:
+
+```javascript
+function makePublisher(e) {
+  var i;
+
+  for (i in publisher) {
+    if (publisher.hasOwnProperty(i) && typeof publisher[i] === 'function') {
+      o[i] = publisher[i];
+    }
+  }
+  o.subscribers = {any: []};
+}
+```
+
+Now let's implement the `paper` object. All it can do is publish daily and monthly:
+
+```javascript
+let paper = {
+  daily: function () {
+    this.publish('Big news today');
+  },
+  monthly: function () {
+    this.publish('Interesting analysis', 'monthly');
+  }
+};
+```
+
+Making a `paper` a publisher
+
+```javascript
+makePublisher(paper);
+```
+
+Now, let's see the subscriber object joe, which has two methods:
+
+```javascript
+let joe = {
+  drinkCoffe: function (paper) {
+    console.log(`Just read ${paper}`);
+  },
+  sundayPreNap: function (monthly) {
+    console.log(`About to fall asleep reading this ${monthly}`);
+  }
+};
+
+paper.subscribe(joe.drinkCofee);
+paper.subscribe(joe.sundayPreNap, 'monthly');
+```
+
+Now fire some events:
+
+```javascript
+paper.daily();
+paper.monthly();
+```
 # Structural Pattern: Decorator
 > The decorator pattern is used to extend or alter the functionality of objects at run-time by wrapping them in an object of a decorator class. This provides a flexible alternative to using inheritance to modify behaviour.
 
