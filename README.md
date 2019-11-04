@@ -3,8 +3,9 @@
 # Index
 
 Reference docs
-* [Docs Reference: Global_Objects](#docs-reference--global-objects)
+* [Library Reference](#library-reference)
 * [Docs Reference: ES6, ES7, ES8, ES9](#docs-reference--es6--es7--es8--es9)
+* [Docs Reference: Global_Objects](#docs-reference--global-objects)
 
 Fundamentals (Syntax)
 * [Fundamentals: Intro](#fundamentals--intro)
@@ -69,221 +70,6 @@ Intermediate (In-depth)
     * [Structural Pattern: Strategy](#structural-pattern--strategy)
     * [Structural Pattern: Facade](#structural-pattern--facade)
     * [Structural Pattern: Proxy](#structural-pattern--proxy)
-# Docs Reference: Global_Objects
-Global objects or standard __built in objects__ refers to objects in the global scope.
-
-[MDN Docs - Reference](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects) 
-
-Non-standard objects won't be listed as shouldn't be used in production.
-
----
-
-* __Value Properties__
-    * `Infinity`
-    * `NaN`
-    * `undefined`
-    * `null` 
-    * `globalThis`
---- 
-
-* __Function Properties__
-These global functions (are called globally rather that on an object) directly return their results to the caller.
-    * `eval()`
-    * `isFinite()`
-    * `isNaN()`
-    * `parseFloat()`
-    * `parseInt()`
-    * `decodeURI()`
-    * `decodeURIComponent()`
-    * `encodeURI()`
-    * `encodeURIComponent()`
-
----
-* __Fundamental Objects__
-Basic objects upon which all other objects are based. 
-    * `Object`
-    * `Function`
-    * `Boolean`
-    * `Symbol`
-    * `Error`
-    * `EvalError`
-    * `RangeError`
-    * `ReferenceError`
-    * `SyntaxError`
-    * `TypeError`
-    * `URIError`
----
-* __Number and Dates__
-    * `Number`
-    * `BigInt`
-    * `Math`
-    * `Date`
----
-* __Text Processing__ 
-    * `String`
-    * `RegExp`
----
-* __Indexed Collections__
-    * [Array](#array_methods)
-    * Typed Arrays (int, Uint, float, bigInt)
-    
----
-* __Keyed Collections (ES6)__
-    * Map
-    * Set
-    * WeakMap
-    * WeakSet
----
-* __Structured Data__: Objects represent and interact with structured data buffers and data coded using JSON.
-    * ArrayBuffer
-    * SharedArrayBuffer
-    * Atomics
-    * DataView
-    * JSON
----
-* __Control Abstraction Objects (ES6)__
-    * Promise
-    * Generator
-    * GeneratorFunction
-    * AsyncFunction
----
-* __Reflection__
-    * Refect
-    * Proxy
----
-* __Internationalization__
-    * Intl: Additions to the ECMAScript core for language-sensitive functionalities
-
----
-* __WebAssembly__
-    * Module
-    * Instance
-    * Memory
-    * Table
-    * CompileError
-    * LinkError
-    * RuntimeError
----
-* __Other__
-    * arguments
-    
-# Docs Reference: ES6, ES7, ES8, ES9
- ## ES6 (2015)
-
-[Features: Overview & Comparison](http://es6-features.org/#Constants)
-
-ES6 can't compile directly in browsers, so we need a compiler such as _babel_ from ES6 to ES5.
-
-* __Constants__ `const`
-* __Scoping__ (without hoisting)
-    * Block-Scoped Variables: `let`
-    * Block-Scoped Functions definitions
-* __Arrow Functions__
-    * Expression Bodies
-    * Statement Bodies
-    * Lexical `this` (__!__)
-* __Extended Parameter Handling__
-    * Default Parameter Values `function f (x=1)`
-    * Rest Parameter `function f (x, y, ...a)`
-    * Spread Operator `var other = [1, 2, ...params]`
-* __Template Literals__
-    * String interpolation and Raw String Access `${var}`
-* __Extended Literals__
-    * Binary & Octal Literal
-    * Unicode String & RegExp Literal
-* __Enchanced Regular Expressions__
-    * Sticky Matching
-* __Enhanced Object Properties__
-    * Property Shorthand: `obj = { x, y }`
-    * Computed Property Names
-    * Method Properties: support for regular and generator functions notation in object property definitions
-* __Destructing Assignment__
-    * Array Matching
-    * Object Matching
-        * Shorthand
-        * Deep Matching
-    * Array and Object default values
-    * Parameter Context Matching (Destructing Assignment
-    * Fail-Soft Destructing
-* __Modules__
-    * Value Export/Import
-    * Default & Wildcard
-* __Classes__
-    * Class Definition
-    * Class Inheritance
-    * Class From Expressions
-    * Base Class Access
-    * Static Members
-    * Getter / Setter
-* __Symbol Type__
-    * Symbol Type (unique and immutable data type tob eused as an identifier for object properties)
-    * Global Symbols
-* __Iterators__
-    * Iterator & For-Of Operator
-* __Generators__
-    * Generator Function, iterator Protocol
-    * Generator Function, Direct Use
-    * Generator Matching
-    * Generator Control-FLow
-    * Generator Methods
-* __Data Structures__
-    * Map / Sett
-    * WeakMap / WeakSet
-    * Typed Arrays
-* __New Built-In Methods__
-    * Object Property Assignment `Object.assign`
-    * Array Element Finding `arr.find` `arr.findIndex`
-    * String Repeating `str.repeat`
-    * String Searching `str.startsWith` `str.endsWith` `str.includes`
-    * Number Type Checking `.isNan()` `.isFinite()`
-    * Number Safety Checking `.isSafeInteger()`
-    * Number Comparison (Availability of a standard Epsilon value)
-    * Number Truncation `Math.trunc`
-    * Number Sign Determination `.sign`
-* __Promises__
-* __Meta-Programming__
-    * Proxying
-    * Reflection
-* __Internationalization & Location__
-    * Collation
-    * Number Formatting
-    * Currency Formatting
-    * Date/Time Formatting
-
- ## ES7 (2016)
-
-They decided to release a new version of ECMAScript every year starting in 2015. A yearly update means no more big releases like ES6.
-
-* Array.prototype.includes()
-* Exponentiation operator
-
- ## ES8 (2017)
-
-* __Async Functions__
-    * Async
-    * Await
-* __Shared memory and atomics__
-    * Atomics
-    * SharedArrayBuffer
-    * [More info](https://2ality.com/2017/01/shared-array-buffer.html)
-* Object.values
-* Object.entries
-* Object.getOwnPropertyDescriptors
-* String padding
-* Trailing commas in function parameters lists and calls
-
- ## ES9 (2018)
-
-* [__Asynchronous Iteration__](https://2ality.com/2016/10/asynchronous-iteration.html)
-* __Rest/Spread properties__
-* __Promise.prototype.finally__
-* Template literal revision
-* RegExp features
-    * [Named capture groups](https://2ality.com/2017/05/regexp-named-capture-groups.html)
-    * [Unicode property escapes](https://2ality.com/2017/07/regexp-unicode-property-escapes.html)
-    * [Lookbehind assertions](https://2ality.com/2017/05/regexp-lookbehind-assertions.html)
-    * [s(dotAll) flag](https://2ality.com/2017/07/regexp-dotall-flag.html)
-
 
 # Fundamentals: Intro
 Few important concepts
@@ -3709,3 +3495,223 @@ An example prox object may try to combine the requests using a simple logic: a 5
  ### Proxy as Cache
 
 The _proxy_ can go further in protecting the real subject _http_ by caching the results of previous request into a _new cache_ property. Then if the client happens to request information a second time, proxy can pull it out of the cache and save the network roundtrip.
+# Library Reference
+Utils and language extras
+[Lodash](https://lodash.com/docs/4.17.15)
+
+# Docs Reference: ES6, ES7, ES8, ES9
+ ## ES6 (2015)
+
+[Features: Overview & Comparison](http://es6-features.org/#Constants)
+
+ES6 can't compile directly in browsers, so we need a compiler such as _babel_ from ES6 to ES5.
+
+* __Constants__ `const`
+* __Scoping__ (without hoisting)
+    * Block-Scoped Variables: `let`
+    * Block-Scoped Functions definitions
+* __Arrow Functions__
+    * Expression Bodies
+    * Statement Bodies
+    * Lexical `this` (__!__)
+* __Extended Parameter Handling__
+    * Default Parameter Values `function f (x=1)`
+    * Rest Parameter `function f (x, y, ...a)`
+    * Spread Operator `var other = [1, 2, ...params]`
+* __Template Literals__
+    * String interpolation and Raw String Access `${var}`
+* __Extended Literals__
+    * Binary & Octal Literal
+    * Unicode String & RegExp Literal
+* __Enchanced Regular Expressions__
+    * Sticky Matching
+* __Enhanced Object Properties__
+    * Property Shorthand: `obj = { x, y }`
+    * Computed Property Names
+    * Method Properties: support for regular and generator functions notation in object property definitions
+* __Destructing Assignment__
+    * Array Matching
+    * Object Matching
+        * Shorthand
+        * Deep Matching
+    * Array and Object default values
+    * Parameter Context Matching (Destructing Assignment
+    * Fail-Soft Destructing
+* __Modules__
+    * Value Export/Import
+    * Default & Wildcard
+* __Classes__
+    * Class Definition
+    * Class Inheritance
+    * Class From Expressions
+    * Base Class Access
+    * Static Members
+    * Getter / Setter
+* __Symbol Type__
+    * Symbol Type (unique and immutable data type tob eused as an identifier for object properties)
+    * Global Symbols
+* __Iterators__
+    * Iterator & For-Of Operator
+* __Generators__
+    * Generator Function, iterator Protocol
+    * Generator Function, Direct Use
+    * Generator Matching
+    * Generator Control-FLow
+    * Generator Methods
+* __Data Structures__
+    * Map / Sett
+    * WeakMap / WeakSet
+    * Typed Arrays
+* __New Built-In Methods__
+    * Object Property Assignment `Object.assign`
+    * Array Element Finding `arr.find` `arr.findIndex`
+    * String Repeating `str.repeat`
+    * String Searching `str.startsWith` `str.endsWith` `str.includes`
+    * Number Type Checking `.isNan()` `.isFinite()`
+    * Number Safety Checking `.isSafeInteger()`
+    * Number Comparison (Availability of a standard Epsilon value)
+    * Number Truncation `Math.trunc`
+    * Number Sign Determination `.sign`
+* __Promises__
+* __Meta-Programming__
+    * Proxying
+    * Reflection
+* __Internationalization & Location__
+    * Collation
+    * Number Formatting
+    * Currency Formatting
+    * Date/Time Formatting
+
+ ## ES7 (2016)
+
+They decided to release a new version of ECMAScript every year starting in 2015. A yearly update means no more big releases like ES6.
+
+* Array.prototype.includes()
+* Exponentiation operator
+
+ ## ES8 (2017)
+
+* __Async Functions__
+    * Async
+    * Await
+* __Shared memory and atomics__
+    * Atomics
+    * SharedArrayBuffer
+    * [More info](https://2ality.com/2017/01/shared-array-buffer.html)
+* Object.values
+* Object.entries
+* Object.getOwnPropertyDescriptors
+* String padding
+* Trailing commas in function parameters lists and calls
+
+ ## ES9 (2018)
+
+* [__Asynchronous Iteration__](https://2ality.com/2016/10/asynchronous-iteration.html)
+* __Rest/Spread properties__
+* __Promise.prototype.finally__
+* Template literal revision
+* RegExp features
+    * [Named capture groups](https://2ality.com/2017/05/regexp-named-capture-groups.html)
+    * [Unicode property escapes](https://2ality.com/2017/07/regexp-unicode-property-escapes.html)
+    * [Lookbehind assertions](https://2ality.com/2017/05/regexp-lookbehind-assertions.html)
+    * [s(dotAll) flag](https://2ality.com/2017/07/regexp-dotall-flag.html)
+
+
+# Docs Reference: Global_Objects
+Global objects or standard __built in objects__ refers to objects in the global scope.
+
+[MDN Docs - Reference](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects) 
+
+Non-standard objects won't be listed as shouldn't be used in production.
+
+---
+
+* __Value Properties__
+    * `Infinity`
+    * `NaN`
+    * `undefined`
+    * `null` 
+    * `globalThis`
+--- 
+
+* __Function Properties__
+These global functions (are called globally rather that on an object) directly return their results to the caller.
+    * `eval()`
+    * `isFinite()`
+    * `isNaN()`
+    * `parseFloat()`
+    * `parseInt()`
+    * `decodeURI()`
+    * `decodeURIComponent()`
+    * `encodeURI()`
+    * `encodeURIComponent()`
+
+---
+* __Fundamental Objects__
+Basic objects upon which all other objects are based. 
+    * `Object`
+    * `Function`
+    * `Boolean`
+    * `Symbol`
+    * `Error`
+    * `EvalError`
+    * `RangeError`
+    * `ReferenceError`
+    * `SyntaxError`
+    * `TypeError`
+    * `URIError`
+---
+* __Number and Dates__
+    * `Number`
+    * `BigInt`
+    * `Math`
+    * `Date`
+---
+* __Text Processing__ 
+    * `String`
+    * `RegExp`
+---
+* __Indexed Collections__
+    * [Array](#array_methods)
+    * Typed Arrays (int, Uint, float, bigInt)
+    
+---
+* __Keyed Collections (ES6)__
+    * Map
+    * Set
+    * WeakMap
+    * WeakSet
+---
+* __Structured Data__: Objects represent and interact with structured data buffers and data coded using JSON.
+    * ArrayBuffer
+    * SharedArrayBuffer
+    * Atomics
+    * DataView
+    * JSON
+---
+* __Control Abstraction Objects (ES6)__
+    * Promise
+    * Generator
+    * GeneratorFunction
+    * AsyncFunction
+---
+* __Reflection__
+    * Refect
+    * Proxy
+---
+* __Internationalization__
+    * Intl: Additions to the ECMAScript core for language-sensitive functionalities
+
+---
+* __WebAssembly__
+    * Module
+    * Instance
+    * Memory
+    * Table
+    * CompileError
+    * LinkError
+    * RuntimeError
+---
+* __Other__
+    * arguments
+    
