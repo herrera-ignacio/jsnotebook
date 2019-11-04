@@ -750,6 +750,142 @@ Visit the [Github repo](https://github.com/axios/axios) for more info and __exam
 * Automatic transforms for JSON data
 * Client side support for protecting against XSRF
 
+# Fundamentals: This
+The environment (or scope) in which the line is being executed is known as "Execution Context". The Javascrit runtime maintains a stack of these execution contexts and the execution context present at the top of this stack is currently being executed.
+
+> The object that `this` refers change every time execution context is changed.
+
+ #### `this` refers to global object
+
+By default the execution context for an execution is global, which means that if a code is being executed as part of a simple function call then `this` refers to global object. `window` object is global object in the case of browser and in Node.js environment, a special object `global` will be the value of `this`.
+
+For example:
+
+```javascript
+function foo () {
+	console.log("Simple function call");
+	console.log(this === window); 
+}
+
+foo();	//prints true on console
+console.log(this === window) //Prints true on console.`
+```
+
+ #### IIFE - Immediately invoked function expression
+
+```javascript
+(function(){
+	console.log("Anonymous function invocation");
+	console.log(this === window);
+})();
+// Prints true on console
+```
+
+If `strict mode` is enabled for any function then the value of `this` will be `undefined` as in strict mode, global object refers to undefined in place of windows object.
+
+```javascript
+function foo () {
+	'use strict';
+	console.log("Simple function call")
+	console.log(this === window); 
+}
+
+foo();	//prints false on console as in “strict mode” value of “this” in global execution context is undefined.
+```
+
+ #### `this` refers to new instance
+
+Wen a function is invoked with `new` keyword, then the function is known as constructor function and returns a new instance. In such cases, the value of `this` refers to newly created instance.
+
+```javascript
+function Person(fn, ln) {
+	this.first_name = fn;
+	this.last_name = ln;
+
+	this.displayName = function() {
+		console.log(`Name: ${this.first_name} ${this.last_name}`);
+	}
+}
+
+let person = new Person("John", "Reed");
+person.displayName();  // Prints Name: John Reed
+let person2 = new Person("Paul", "Adams");
+person2.displayName();  // Prints Name: Paul Adams
+```
+
+ #### `this` refers to invoker object (parent)
+
+When an Object's method is invoked, then `this` refers to the object which contains the method being invoked.
+
+```javascript
+function foo () {
+	'use strict';
+	console.log("Simple function call")
+	console.log(this === window); 
+}
+
+let user = {
+	count: 10,
+	foo: foo,
+	foo1: function() {
+		console.log(this === window);
+	}
+}
+
+user.foo()  // Prints false because now “this” refers to user object instead of global object.
+let fun1 = user.foo1;
+fun1() // Prints true as this method is invoked as a simple function.
+user.foo1()  // Prints false on console as foo1 is invoked as a object’s method
+```
+
+ #### `this` with `call`, apply methods
+
+The only difference between call and apply method is the way argument is passed. In case of apply, second argument is an array of arguments where in case of call method, arguments are passed individually.
+
+Every function has `call`, `bind`, and `apply` methods that can e used to set custom value of `this` to the execution context.
+
+```javascript
+function Person(fn, ln) {
+	this.first_name = fn;
+	this.last_name = ln;
+
+	this.displayName = function() {
+		console.log(`Name: ${this.first_name} ${this.last_name}`);
+	}
+}
+
+let person = new Person("John", "Reed");
+person.displayName(); // Prints Name: John Reed
+let person2 = new Person("Paul", "Adams");
+person2.displayName(); // Prints Name: Paul Adams
+
+person.displayName.call(person2); // Here we are setting value of this to be person2 object
+//Prints Name: Paul Adams
+```
+
+```javascript
+
+function Person(fn, ln) {
+	this.first_name = fn;
+	this.last_name = ln;
+
+	this.displayName = function() {
+		console.log(`Name: ${this.first_name} ${this.last_name}`);
+	}
+}
+
+let person = new Person("John", "Reed");
+person.displayName(); // Prints Name: John Reed
+let person2 = new Person("Paul", "Adams");
+person2.displayName(); // Prints Name: Paul Adams
+
+let person2Display = person.displayName.bind(person2);  // Creates new function with value of “this” equals to person2 object
+person2Display(); // Prints Name: Paul Adams
+```
+
+ #### `this` with arrow function
+
+Arrow function doesn't create a new value for `this`, but instead, keeps referring to the same object it is referring outside the function.
 # Intermediate: Functions and Patterns
 
 * _first-class objects_ (IMPORTANT)
