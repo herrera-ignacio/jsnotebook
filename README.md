@@ -750,6 +750,187 @@ Visit the [Github repo](https://github.com/axios/axios) for more info and __exam
 * Automatic transforms for JSON data
 * Client side support for protecting against XSRF
 
+# Fundamentals: Scope vs Context (this)
+Fundamentally, __scope is function-based__ while __context is object-based__. In other words, scope pertains to the variable access of a function when it is invoked and is unique to each invocation. Context is always the value of the this keyword which is a reference to the object that “owns” the currently executing code.
+
+ ## Default Binding
+
+It’s the most common case of function calls the standalone function invocation like below example.
+
+```javascript
+var myFunction = function() {
+   console.log(this);
+}
+
+myFunction();    // Window 
+```
+
+As you see above because we call` myfunction() `from the `Window` context so this will refer to Window object.
+
+```javascript
+var myFunction = function() {
+   console.log(this.a);
+}
+
+var a = 5 ;
+myFunction();    //5  
+```
+
+ ## Implicit Binding
+
+In this case, The object that is standing before the dot is what this keyword will be bound to.
+
+```javascript
+function foo(){
+	console.log(this.a);
+}
+
+var obj = {
+	a:2,
+	foo:foo
+};
+
+obj.foo();  // 2 
+```
+
+Noted: if you assign the `obj.foo` to a variable then this variable will reference to the function itself
+
+```javascript
+
+var john = {
+	name: 'John',
+	greet: function(person) {
+      console.log("Hi " + person +", my name is " + this.name);
+	}
+}
+
+john.greet("Mark");  // Hi Mark, my name is John
+
+var fx = john.greet;
+fx("Mark");   // Hi Mark, my name is  
+```
+
+As we see when you call `john.greet(“Mark”)` this will refer to the `john` object so `this.name` will be John
+
+But after that when assignment `var fx = john.greet`, so `fx` will be a reference to the greet function itself so the default binding applies and this will refer to `Window`.
+
+ ## Explicit Binding
+
+In this case, you can force a function call to use a particular object for `this` binding, without putting a property function reference on the object. so we explicitly say to a function what object it should use for this — using functions such as `call`, `apply` and `bind`.
+
+> You can use Bind to returns a function that you can later execute, but Call/apply use it when you need to call the function immediately.
+
+```javascript
+function greet() {
+	console.log(this.name);
+}
+
+var person = {
+	name:'Alex'
+}
+
+greet.call(person, arg1, arg2, arg3, ...); // Alex
+```
+
+The `apply` function is similar to call with the difference that the function arguments are passed as an array.
+
+```javascript
+function greet() {
+	console.log(this.name);
+}
+
+var person = {
+	name:'Alex'
+}
+
+greet.apply(person, [args]); // Alex
+```
+
+The `bind` function creates a new function that will act as the original function but with this predefined.
+
+```javascript
+function greet() {
+	console.log(this.name);
+}
+
+var person = {
+	name:'Alex'
+};
+
+var greetPerson = greet.bind(person); 
+greetPerson(); // Alex
+```
+
+ ## New Binding
+
+The function that is called with `new` operator when the code `new Foo(…)` is executed, the following things happen:
+
+1. An empty object is created and referenced by `this` variable, inheriting the prototype of the function.
+2. Properties and methods are added to the object referenced by `this`.
+3. The newly created object referenced by `this` is returned at the end implicitly (if no other object was returned explicitly).
+
+```javascript
+function Foo() {        
+        /*
+	       1- create a new object using the object literal 
+		   var this = {};
+       */
+
+	  // 2- add properties and methods 
+	    this.name = 'Osama';
+		this.say = function () {
+		return "I am " + this.name; 
+	   };
+
+	  // 3- return this;
+}
+
+var name = 'Ahmed';
+var result = new Foo();
+console.log(result.name);  //3
+```
+
+ # What about Arrow Functions
+
+Normal functions abide by the 4 rules we just covered. But ES6 introduces a special kind of function that does not use these rules.
+
+>  You don’t rebind the value of this when you use an arrow function inside of another function
+
+```javascript
+const outerThis = this;
+
+const func = () => {
+    console.log(this === outerThis);
+};
+
+new func();
+func.call(null);        //true
+func.apply(undefined);  //true
+func.bind({})();       //true 
+```
+
+`this` will always refer to the __lexical scope__ and not impact by any rule from the 4 rules such as I explicit binding in above example also if you try to use `new` before arrow function will give an error because arrow functions can’t run with new.
+
+So `this` in arrow function __will always take his value from the outside__ (Lexical scope).
+
+```javascript
+var group = {
+  title: "Our Group",
+  students: ["John", "Pete", "Alice"],
+
+  showList() {
+    this.students.forEach(
+         (student) => { 
+         	       // this here refer to group object
+      	          console.log(this.title + ': ' + student);
+                }
+    );
+  }
+};
+
+group.showList();
+
+```
 # Fundamentals: This
 The environment (or scope) in which the line is being executed is known as "Execution Context". The Javascrit runtime maintains a stack of these execution contexts and the execution context present at the top of this stack is currently being executed.
 
