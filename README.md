@@ -1764,6 +1764,8 @@ doWork()
 # Intermediate: Class vs Prototype
 Unlike most other languages, JavaScript’s object system is __based on prototypes, not classes__.
 
+[READ MORE FROM MDN: Inheritance and the prototype chain](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain)
+
  ### Difference between Class & Prototypal Inheritance?
 
  ##### Class Inheritance
